@@ -333,6 +333,15 @@ input[type=range].sl::-moz-range-thumb{width:22px;height:22px;border-radius:50%;
     <div class="theorem ok" id="dash-thm"><div class="th-title" id="dash-th-t">判定中…</div><div id="dash-th-c"></div></div>
     <button class="btn btn-te" onclick="openMeasure()">📸 この患者の計測を開始</button>
     <button class="btn btn-out" onclick="goTab('pats')">👥 患者一覧へ</button>
+    <a href="https://gorousui642-ux.github.io/bodyaxis-app/" target="_blank" rel="noopener"
+       style="display:flex;align-items:center;gap:12px;background:linear-gradient(135deg,#0D2340,#1a3a5c);border-radius:12px;padding:14px;text-decoration:none;margin-bottom:10px;">
+      <div style="font-size:26px;flex-shrink:0;">📱</div>
+      <div style="flex:1;">
+        <div style="font-size:12px;font-weight:800;color:#fff;margin-bottom:1px;">BodyAxis — 患者用アプリ</div>
+        <div style="font-size:11px;color:rgba(255,255,255,.5);">患者にシェアして連携できます</div>
+      </div>
+      <div style="color:var(--am);font-size:18px;font-weight:800;">→</div>
+    </a>
   </div>
   <div class="bpad"></div>
 </div>
@@ -370,7 +379,10 @@ input[type=range].sl::-moz-range-thumb{width:22px;height:22px;border-radius:50%;
     <div class="sec">患者向け Report A</div>
     <div class="card"><div class="card-body"><div style="font-size:13px;line-height:2.0;" id="rep-a">-</div></div></div>
     <button class="btn btn-na" onclick="toast('PDFを生成します（正式アプリ機能）')">📄 PDF レポートを生成</button>
-    <button class="btn btn-out" onclick="toast('BodyAxisアプリへ共有します（正式アプリ機能）')">📤 患者アプリへ共有</button>
+    <a href="https://gorousui642-ux.github.io/bodyaxis-app/" target="_blank" rel="noopener"
+       class="btn btn-out" style="text-decoration:none;margin-bottom:10px;">
+      📤 BodyAxis（患者アプリ）を開く
+    </a>
   </div>
   <div class="bpad"></div>
 </div>
@@ -420,10 +432,21 @@ input[type=range].sl::-moz-range-thumb{width:22px;height:22px;border-radius:50%;
   <div class="sec">BodyAxis 患者連携</div>
   <div class="card"><div class="card-body">
     <div style="font-size:12px;color:var(--su);line-height:1.9;margin-bottom:10px;">患者が BodyAxis をインストールし、施術者コードを入力するとデータが自動共有されます。</div>
-    <div style="background:var(--bg);border-radius:10px;padding:12px;display:flex;align-items:center;gap:10px;">
+    <div style="background:var(--bg);border-radius:10px;padding:12px;display:flex;align-items:center;gap:10px;margin-bottom:10px;">
       <div style="font-size:11px;color:var(--su);">施術者コード</div>
       <div style="font-size:20px;font-weight:800;color:var(--na);letter-spacing:.1em;">USUI-2026</div>
       <button class="btn btn-sm btn-out" style="margin-left:auto;" onclick="toast('コードをコピーしました')">コピー</button>
+    </div>
+    <div style="background:linear-gradient(135deg,#0D2340,#1a3a5c);border-radius:10px;padding:14px;display:flex;align-items:center;gap:12px;">
+      <div style="font-size:28px;flex-shrink:0;">📱</div>
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:12px;font-weight:800;color:#fff;margin-bottom:2px;">患者用アプリ BodyAxis</div>
+        <div style="font-size:10px;color:rgba(255,255,255,.5);word-break:break-all;line-height:1.5;">gorousui642-ux.github.io/bodyaxis-app</div>
+      </div>
+      <a href="https://gorousui642-ux.github.io/bodyaxis-app/" target="_blank" rel="noopener"
+         style="background:var(--am);color:var(--na);border:none;border-radius:8px;padding:9px 14px;font-size:12px;font-weight:800;text-decoration:none;white-space:nowrap;flex-shrink:0;">
+        開く →
+      </a>
     </div>
   </div></div>
   <div class="sec">施設・法人向け</div>
