@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>AxisPro — Clinical Phase Analytics</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f8fafc; --bg2:#f1f5f9; --surface:#ffffff;
+  --border:#e2e8f0; --border2:#cbd5e1;
+  --accent:#7c3aed; --accent-d:#6d28d9;
+  --blue:#0ea5e9; --green:#059669; --red:#dc2626;
+  --text:#0f172a; --text-mid:#334155;
+  --text-sub:#64748b; --text-dim:#94a3b8;
+  --font-sans:'Noto Sans JP',sans-serif;
+  --font-mono:'DM Mono',monospace;
+  --sh:0 1px 3px rgba(0,0,0,0.06);
+  --sh2:0 4px 12px rgba(0,0,0,0.07);
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html,body{height:100%;overflow:hidden;}
+body{background:var(--bg);color:var(--text);font-family:var(--font-sans);font-weight:400;display:flex;flex-direction:column;max-width:480px;margin:0 auto;}
+
+/* TOP BAR */
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:13px 18px 11px;background:#fff;border-bottom:1px solid var(--border);flex-shrink:0;box-shadow:0 1px 3px rgba(0,0,0,0.05);}
+.logo{font-family:var(--font-mono);font-size:17px;color:var(--accent);letter-spacing:0.07em;}
+.logo span{font-size:9px;color:var(--text-dim);display:block;letter-spacing:0.25em;text-transform:uppercase;margin-top:1px;}
+.topbar-r{display:flex;align-items:center;gap:10px;}
+.plan-tag{padding:3px 10px;border-radius:20px;font-family:var(--font-mono);font-size:10px;letter-spacing:0.1em;background:rgba(124,58,237,0.08);color:var(--accent-d);border:1px solid rgba(124,58,237,0.2);}
+.home-link{font-size:11px;color:var(--text-sub);text-decoration:none;font-family:var(--font-mono);letter-spacing:0.08em;}
+.home-link:hover{color:var(--accent);}
+
+/* TABS */
+.tabbar{display:flex;background:#fff;border-bottom:1px solid var(--border);flex-shrink:0;}
+.tab{flex:1;padding:10px 3px;font-family:var(--font-mono);font-size:9px;letter-spacing:0.08em;text-align:center;color:var(--text-sub);cursor:pointer;border-bottom:2px solid transparent;transition:all .15s;text-transform:uppercase;}
+.tab.active{color:var(--accent);border-bottom-color:var(--accent);}
+
+/* MAIN */
+.main{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;}
+.panel{display:none;padding:14px;}
+.panel.active{display:block;}
+
+/* CAMERA */
+.cam-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;}
+.cam-box{position:relative;aspect-ratio:9/16;background:#111;border-radius:10px;overflow:hidden;border:1px solid var(--border);}
+.cam-lbl{position:absolute;top:7px;left:7px;font-family:var(--font-mono);font-size:9px;letter-spacing:0.18em;color:rgba(255,255,255,0.75);background:rgba(0,0,0,0.45);padding:2px 7px;border-radius:4px;text-transform:uppercase;z-index:2;}
+video{width:100%;height:100%;object-fit:cover;display:block;}
+.guide-v{position:absolute;left:50%;top:0;bottom:0;width:1px;background:rgba(124,58,237,0.35);transform:translateX(-50%);pointer-events:none;}
+.guide-h{position:absolute;left:0;right:0;height:1px;background:rgba(124,58,237,0.12);pointer-events:none;}
+.g1{top:25%;}.g2{top:50%;}.g3{top:75%;}
+.cam-idle{position:absolute;inset:0;background:var(--bg2);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:6px;}
+.cam-idle-lbl{font-family:var(--font-mono);font-size:9px;letter-spacing:0.15em;color:var(--text-dim);text-transform:uppercase;}
+.cd-ov{position:absolute;inset:0;background:rgba(255,255,255,0.85);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:8px;display:none;}
+.cd-num{font-family:var(--font-mono);font-size:52px;font-weight:300;color:var(--accent);line-height:1;}
+.cd-lbl{font-family:var(--font-mono);font-size:9px;letter-spacing:0.2em;color:var(--text-sub);text-transform:uppercase;}
+.progress-bar{position:absolute;bottom:0;left:0;right:0;height:3px;background:rgba(0,0,0,0.06);}
+.progress-fill{height:100%;background:linear-gradient(90deg,var(--green),var(--accent));transition:width .1s linear;width:0%;}
+
+/* PATIENT SELECT */
+.patient-sel-bar{background:#fff;border:1px solid var(--border);border-radius:8px;padding:9px 13px;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;}
+.ps-label{font-family:var(--font-mono);font-size:9px;letter-spacing:0.18em;color:var(--text-dim);text-transform:uppercase;}
+#patientSelect{background:transparent;border:none;color:var(--text-mid);font-size:12px;font-family:var(--font-sans);outline:none;cursor:pointer;max-width:180px;}
+
+.ctrl-row{display:flex;gap:8px;margin-bottom:10px;}
+.ctrl-btn{flex:1;padding:10px 4px;border:1.5px solid var(--border2);background:#fff;color:var(--text-sub);border-radius:7px;font-family:var(--font-mono);font-size:9px;letter-spacing:0.1em;cursor:pointer;transition:all .15s;text-align:center;text-transform:uppercase;}
+.ctrl-btn.active,.ctrl-btn:hover{border-color:var(--accent);color:var(--accent);background:rgba(124,58,237,0.04);}
+.btn-measure{width:100%;padding:13px;background:var(--accent);color:#fff;border:none;border-radius:9px;font-family:var(--font-mono);font-size:12px;font-weight:400;letter-spacing:0.15em;cursor:pointer;transition:all .15s;text-transform:uppercase;margin-bottom:6px;}
+.btn-measure:hover{background:var(--accent-d);}
+.btn-measure:disabled{background:var(--text-dim);opacity:0.5;cursor:not-allowed;}
+.measure-note{text-align:center;font-family:var(--font-mono);font-size:10px;color:var(--text-dim);letter-spacing:0.1em;}
+
+/* RESULT */
+.score-bar{display:flex;gap:8px;margin-bottom:14px;}
+.score-box{flex:1;background:#fff;border:1px solid var(--border);border-radius:10px;padding:12px 10px;text-align:center;box-shadow:var(--sh);}
+.sb-label{font-family:var(--font-mono);font-size:8px;letter-spacing:0.18em;color:var(--text-dim);text-transform:uppercase;margin-bottom:5px;}
+.sb-val{font-family:var(--font-mono);font-size:30px;font-weight:300;line-height:1;color:var(--text);}
+.sb-sub{font-family:var(--font-mono);font-size:8px;color:var(--text-dim);margin-top:3px;}
+.s-ok{color:var(--green);}.s-mid{color:#d97706;}.s-bad{color:var(--red);}
+
+.mt{background:#fff;border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:12px;box-shadow:var(--sh);}
+.mt-row{display:grid;grid-template-columns:120px 1fr 56px;border-bottom:1px solid var(--border);align-items:center;}
+.mt-row:last-child{border-bottom:none;}
+.mt-row.hd{background:var(--bg2);}
+.mt-cell{padding:10px 13px;font-size:12px;color:var(--text-mid);}
+.mt-row.hd .mt-cell{font-family:var(--font-mono);font-size:9px;letter-spacing:0.18em;color:var(--text-dim);text-transform:uppercase;}
+.mt-val{font-family:var(--font-mono);font-size:13px;color:var(--text);}
+.mini-bar{height:4px;background:var(--border);border-radius:2px;overflow:hidden;}
+.mini-fill{height:100%;border-radius:2px;transition:width .7s ease;}
+
+.phase-viz{background:#fff;border:1px solid var(--border);border-radius:10px;padding:13px;margin-bottom:12px;display:flex;align-items:center;gap:14px;box-shadow:var(--sh);}
+.phase-legend{flex:1;}
+.phase-item{display:flex;align-items:center;gap:8px;margin-bottom:7px;font-size:12px;}
+.ph-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.ph-text{color:var(--text-mid);}
+.ph-val{font-family:var(--font-mono);font-size:11px;margin-left:auto;}
+
+.clinical-box{background:rgba(124,58,237,0.04);border:1px solid rgba(124,58,237,0.18);border-radius:10px;padding:13px;margin-bottom:12px;}
+.clinical-box h4{font-family:var(--font-mono);font-size:9px;letter-spacing:0.22em;color:var(--accent);text-transform:uppercase;margin-bottom:7px;}
+.clinical-box p{font-size:13px;color:var(--text-mid);line-height:1.9;}
+
+/* PATIENTS */
+.patient-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+.patient-header h3{font-size:14px;font-weight:500;color:var(--text);}
+.btn-add{padding:8px 14px;background:var(--accent);color:#fff;border:none;border-radius:7px;font-family:var(--font-mono);font-size:9px;letter-spacing:0.1em;cursor:pointer;transition:all .15s;text-transform:uppercase;}
+.btn-add:hover{background:var(--accent-d);}
+.patient-search{width:100%;padding:10px 13px;background:#fff;border:1.5px solid var(--border2);border-radius:8px;color:var(--text);font-family:var(--font-sans);font-size:13px;outline:none;margin-bottom:10px;transition:border-color .15s;}
+.patient-search:focus{border-color:var(--accent);}
+.patient-card{background:#fff;border:1px solid var(--border);border-radius:10px;padding:13px;margin-bottom:7px;cursor:pointer;transition:all .15s;box-shadow:var(--sh);}
+.patient-card:hover{border-color:rgba(124,58,237,0.3);box-shadow:var(--sh2);}
+.pc-r1{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;}
+.pc-name{font-size:14px;font-weight:500;color:var(--text);}
+.pc-id{font-family:var(--font-mono);font-size:10px;color:var(--text-dim);}
+.pc-r2{display:flex;align-items:center;gap:8px;}
+.pc-info{font-size:12px;color:var(--text-sub);}
+.pc-score{font-family:var(--font-mono);font-size:11px;margin-left:auto;}
+.empty{text-align:center;padding:40px 20px;}
+.empty p{font-family:var(--font-mono);font-size:10px;letter-spacing:0.2em;color:var(--text-dim);text-transform:uppercase;}
+
+/* HISTORY */
+.hist-wrap{background:#fff;border:1px solid var(--border);border-radius:10px;padding:13px;margin-bottom:12px;box-shadow:var(--sh);}
+.hist-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;}
+.hist-title{font-family:var(--font-mono);font-size:9px;letter-spacing:0.2em;color:var(--text-sub);text-transform:uppercase;}
+.range-btns{display:flex;gap:5px;}
+.range-btn{padding:3px 9px;border-radius:4px;font-family:var(--font-mono);font-size:9px;letter-spacing:0.1em;cursor:pointer;border:1.5px solid var(--border2);background:#fff;color:var(--text-sub);transition:all .15s;}
+.range-btn.active{background:rgba(124,58,237,0.08);border-color:var(--accent);color:var(--accent);}
+
+/* SETTINGS */
+.setting-row{display:flex;align-items:center;justify-content:space-between;padding:13px;background:#fff;border:1px solid var(--border);border-radius:10px;margin-bottom:8px;box-shadow:var(--sh);}
+.si h4{font-size:13px;font-weight:500;color:var(--text);margin-bottom:2px;}
+.si p{font-size:11px;color:var(--text-sub);}
+.toggle{width:44px;height:24px;background:var(--border2);border-radius:12px;position:relative;cursor:pointer;transition:background .2s;flex-shrink:0;}
+.toggle.on{background:var(--accent);}
+.toggle::after{content:'';position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:#fff;transition:transform .2s;box-shadow:0 1px 3px rgba(0,0,0,0.2);}
+.toggle.on::after{transform:translateX(20px);}
+
+/* MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:200;display:flex;align-items:flex-end;opacity:0;pointer-events:none;transition:opacity .25s;}
+.modal-overlay.open{opacity:1;pointer-events:auto;}
+.modal-sheet{width:100%;max-height:85vh;background:#fff;border-radius:20px 20px 0 0;border-top:1px solid var(--border);overflow-y:auto;transform:translateY(30px);transition:transform .25s;padding:20px;padding-bottom:env(safe-area-inset-bottom,16px);}
+.modal-overlay.open .modal-sheet{transform:translateY(0);}
+.modal-handle{width:36px;height:4px;border-radius:2px;background:var(--border2);margin:0 auto 18px;}
+.modal-title{font-family:var(--font-mono);font-size:12px;letter-spacing:0.15em;color:var(--accent);text-transform:uppercase;margin-bottom:18px;}
+.form-group{margin-bottom:13px;}
+.form-label{font-family:var(--font-mono);font-size:9px;letter-spacing:0.18em;color:var(--text-dim);text-transform:uppercase;margin-bottom:5px;display:block;}
+.form-input,.form-select{width:100%;padding:10px 13px;background:#fff;border:1.5px solid var(--border2);border-radius:8px;color:var(--text);font-family:var(--font-sans);font-size:13px;outline:none;transition:border-color .15s;}
+.form-input:focus,.form-select:focus{border-color:var(--accent);}
+.modal-actions{display:flex;gap:8px;margin-top:18px;}
+.btn-cancel{flex:1;padding:12px;border:1.5px solid var(--border2);background:#fff;color:var(--text-sub);border-radius:8px;font-family:var(--font-mono);font-size:10px;letter-spacing:0.1em;cursor:pointer;transition:all .15s;}
+.btn-cancel:hover{border-color:var(--red);color:var(--red);}
+.btn-save{flex:2;padding:12px;background:var(--accent);color:#fff;border:none;border-radius:8px;font-family:var(--font-mono);font-size:10px;letter-spacing:0.1em;cursor:pointer;transition:all .15s;}
+.btn-save:hover{background:var(--accent-d);}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="logo">AxisPro<span>Clinical Phase Analytics</span></div>
+  <div class="topbar-r">
+    <span class="plan-tag">STARTER ¥3,800</span>
+    <a href="index.html" class="home-link">← HOME</a>
+  </div>
+</div>
+
+<div class="tabbar">
+  <div class="tab active" onclick="switchTab('camera')" id="tab-camera">計測</div>
+  <div class="tab" onclick="switchTab('result')" id="tab-result">解析</div>
+  <div class="tab" onclick="switchTab('patients')" id="tab-patients">患者</div>
+  <div class="tab" onclick="switchTab('history')" id="tab-history">履歴</div>
+  <div class="tab" onclick="switchTab('settings')" id="tab-settings">設定</div>
+</div>
+
+<div class="main">
+
+  <!-- CAMERA -->
+  <div class="panel active" id="panel-camera">
+    <div class="cam-row">
+      <div class="cam-box">
+        <span class="cam-lbl">正面</span>
+        <video id="vidFront" playsinline autoplay muted></video>
+        <div class="guide-v"></div>
+        <div class="guide-h g1"></div><div class="guide-h g2"></div><div class="guide-h g3"></div>
+        <div class="cd-ov" id="cdFront"><div class="cd-num" id="cdFN">3</div><div class="cd-lbl">正面準備</div></div>
+        <div class="progress-bar"><div class="progress-fill" id="pfF"></div></div>
+      </div>
+      <div class="cam-box">
+        <span class="cam-lbl">側面</span>
+        <div class="cam-idle" id="sideIdle">
+          <svg width="28" height="28" viewBox="0 0 28 28" fill="none" style="opacity:0.3;"><rect x="3" y="3" width="22" height="22" rx="3" stroke="#64748b" stroke-width="1.5"/><circle cx="14" cy="12" r="3" stroke="#64748b" stroke-width="1.5"/><path d="M8 22c0-3.3 2.7-6 6-6s6 2.7 6 6" stroke="#64748b" stroke-width="1.5" stroke-linecap="round"/></svg>
+          <div class="cam-idle-lbl">正面完了後</div>
+        </div>
+        <video id="vidSide" playsinline autoplay muted style="display:none;"></video>
+        <div class="cd-ov" id="cdSide"><div class="cd-num" id="cdSN">3</div><div class="cd-lbl">側面準備</div></div>
+        <div class="progress-bar"><div class="progress-fill" id="pfS"></div></div>
+      </div>
+    </div>
+    <div class="patient-sel-bar">
+      <span class="ps-label">患者</span>
+      <select id="patientSelect"><option value="">-- 患者を選択 --</option></select>
+    </div>
+    <div class="ctrl-row">
+      <button class="ctrl-btn active" id="btnBack">背面カメラ</button>
+      <button class="ctrl-btn">デュアル</button>
+    </div>
+    <button class="btn-measure" id="measureBtn" onclick="startMeasurement()">計測開始（正面→側面）</button>
+    <div class="measure-note">10秒間（3秒カウントダウン）各方向を自然な立位で</div>
+  </div>
+
+  <!-- RESULT -->
+  <div class="panel" id="panel-result">
+    <div class="empty" id="resEmpty"><p>計測後に解析結果が表示されます</p></div>
+    <div id="resContent" style="display:none;">
+      <div class="score-bar">
+        <div class="score-box"><div class="sb-label">Sync</div><div class="sb-val" id="rSync">--</div><div class="sb-sub">位相同期</div></div>
+        <div class="score-box"><div class="sb-label">S 構造</div><div class="sb-val" id="rS" style="color:var(--blue);">--</div><div class="sb-sub">姿勢</div></div>
+        <div class="score-box"><div class="sb-label">P 症状</div><div class="sb-val" id="rP" style="color:var(--green);">--</div><div class="sb-sub">主訴</div></div>
+        <div class="score-box"><div class="sb-label">A 適応</div><div class="sb-val" id="rA" style="color:var(--accent);">--</div><div class="sb-sub">代償</div></div>
+      </div>
+      <div class="mt">
+        <div class="mt-row hd"><div class="mt-cell">指標</div><div class="mt-cell">値</div><div class="mt-cell">レベル</div></div>
+        <div class="mt-row"><div class="mt-cell">体軸回旋 τ̂</div><div class="mt-cell"><span class="mt-val" id="mtTau">--</span> °</div><div class="mt-cell"><div class="mini-bar"><div class="mini-fill" id="mfTau" style="background:var(--blue);"></div></div></div></div>
+        <div class="mt-row"><div class="mt-cell">肩傾斜</div><div class="mt-cell"><span class="mt-val" id="mtSh">--</span> °</div><div class="mt-cell"><div class="mini-bar"><div class="mini-fill" id="mfSh" style="background:var(--accent);"></div></div></div></div>
+        <div class="mt-row"><div class="mt-cell">骨盤傾斜</div><div class="mt-cell"><span class="mt-val" id="mtPe">--</span> °</div><div class="mt-cell"><div class="mini-bar"><div class="mini-fill" id="mfPe" style="background:var(--green);"></div></div></div></div>
+        <div class="mt-row"><div class="mt-cell">矢状面偏位</div><div class="mt-cell"><span class="mt-val" id="mtSag">--</span> °</div><div class="mt-cell"><div class="mini-bar"><div class="mini-fill" id="mfSag" style="background:var(--red);"></div></div></div></div>
+        <div class="mt-row"><div class="mt-cell">Ψ 同期指数</div><div class="mt-cell"><span class="mt-val" id="mtPsi">--</span></div><div class="mt-cell"><div class="mini-bar"><div class="mini-fill" id="mfPsi" style="background:var(--accent);"></div></div></div></div>
+      </div>
+      <div class="phase-viz">
+        <canvas id="phCanvas" width="90" height="90" style="flex-shrink:0;"></canvas>
+        <div class="phase-legend">
+          <div class="phase-item"><div class="ph-dot" style="background:var(--blue);"></div><span class="ph-text">低周波 — 姿勢</span><span class="ph-val" id="plLow" style="color:var(--blue);">--</span></div>
+          <div class="phase-item"><div class="ph-dot" style="background:var(--green);"></div><span class="ph-text">中周波 — 呼吸</span><span class="ph-val" id="plMid" style="color:var(--green);">--</span></div>
+          <div class="phase-item"><div class="ph-dot" style="background:var(--accent);"></div><span class="ph-text">高周波 — 下顎</span><span class="ph-val" id="plHigh" style="color:var(--accent);">--</span></div>
+        </div>
+      </div>
+      <div class="clinical-box"><h4>臨床所見</h4><p id="clinNote">-</p></div>
+      <button class="btn-measure" onclick="switchTab('camera')">再計測</button>
+    </div>
+  </div>
+
+  <!-- PATIENTS -->
+  <div class="panel" id="panel-patients">
+    <div class="patient-header"><h3>患者一覧</h3><button class="btn-add" onclick="openModal()">＋ 新規登録</button></div>
+    <input type="text" class="patient-search" id="pSearch" placeholder="患者名・IDで検索..." oninput="filterPatients()">
+    <div id="patientList"></div>
+  </div>
+
+  <!-- HISTORY -->
+  <div class="panel" id="panel-history">
+    <div class="hist-wrap">
+      <div class="hist-hdr">
+        <span class="hist-title">位相同期スコア推移</span>
+        <div class="range-btns">
+          <button class="range-btn active" onclick="setRange(this,'7d')">7日</button>
+          <button class="range-btn" onclick="setRange(this,'1m')">1月</button>
+          <button class="range-btn" onclick="setRange(this,'3m')">3月</button>
+        </div>
+      </div>
+      <canvas id="histChart" style="width:100%;height:130px;display:block;"></canvas>
+    </div>
+    <div class="empty"><p>計測データが蓄積されると表示されます</p></div>
+  </div>
+
+  <!-- SETTINGS -->
+  <div class="panel" id="panel-settings">
+    <div style="font-family:var(--font-mono);font-size:9px;letter-spacing:0.25em;color:var(--text-dim);text-transform:uppercase;margin-bottom:12px;">クリニック設定</div>
+    <div class="setting-row"><div class="si"><h4>夜間顎運動（呼吸）計測</h4><p>患者へのスタンダードプラン連携</p></div><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
+    <div class="setting-row"><div class="si"><h4>自動レポート生成</h4><p>計測後にPDFレポートを自動作成</p></div><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
+    <div class="setting-row"><div class="si"><h4>匿名データ提供</h4><p>研究目的の匿名統計データ送信</p></div><div class="toggle" onclick="this.classList.toggle('on')"></div></div>
+    <div style="margin-top:16px;padding:13px;background:#fff;border:1px solid var(--border);border-radius:10px;box-shadow:var(--sh);">
+      <div style="font-family:var(--font-mono);font-size:9px;letter-spacing:0.2em;color:var(--text-dim);text-transform:uppercase;margin-bottom:8px;">クリニック情報</div>
+      <div style="font-size:13px;color:var(--text-mid);line-height:2;">図書館前歯科<br>静岡県富士市中央町3-9-28<br>院長：臼井五郎</div>
+    </div>
+    <div style="margin-top:14px;text-align:center;"><a href="index.html" style="font-family:var(--font-mono);font-size:11px;color:var(--text-sub);letter-spacing:0.1em;text-decoration:none;">← ホームページへ</a></div>
+  </div>
+</div>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modal">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title">患者新規登録</div>
+    <div class="form-group"><label class="form-label">患者名</label><input type="text" class="form-input" id="pName" placeholder="山田 太郎"></div>
+    <div class="form-group"><label class="form-label">患者ID</label><input type="text" class="form-input" id="pId" placeholder="自動生成"></div>
+    <div class="form-group"><label class="form-label">年齢</label><input type="number" class="form-input" id="pAge" placeholder="45"></div>
+    <div class="form-group"><label class="form-label">性別</label><select class="form-select" id="pGender"><option value="">選択</option><option value="M">男性</option><option value="F">女性</option><option value="O">その他</option></select></div>
+    <div class="form-group"><label class="form-label">主訴</label><input type="text" class="form-input" id="pChief" placeholder="肩こり、腰痛、頭痛など"></div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeModal()">キャンセル</button>
+      <button class="btn-save" onclick="savePatient()">登録する</button>
+    </div>
+  </div>
+</div>
+
+<script>
+let patients=JSON.parse(localStorage.getItem('axispro_p')||'[]');
+let vidFront=null;
+let measPhase='idle';
+
+function switchTab(name){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.getElementById('tab-'+name).classList.add('active');
+  document.getElementById('panel-'+name).classList.add('active');
+  if(name==='camera') initCamera();
+  if(name==='patients') renderPatients();
+  if(name==='history') drawHistChart();
+}
+
+async function initCamera(){
+  if(vidFront) return;
+  try{
+    const stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{exact:'environment'},width:{ideal:720},height:{ideal:1280}},audio:false});
+    vidFront=stream;
+    document.getElementById('vidFront').srcObject=stream;
+  }catch(e){
+    try{
+      const stream=await navigator.mediaDevices.getUserMedia({video:{width:{ideal:720},height:{ideal:1280}},audio:false});
+      vidFront=stream;document.getElementById('vidFront').srcObject=stream;
+    }catch(e2){console.warn('Camera unavailable');}
+  }
+}
+
+function startMeasurement(){
+  if(measPhase!=='idle') return;
+  document.getElementById('measureBtn').disabled=true;
+  measPhase='running';
+  runCD('F',3,()=>runMeasure('F',()=>{
+    activateSide(()=>runCD('S',3,()=>runMeasure('S',()=>{
+      measPhase='idle';computeResults();
+    })));
+  }));
+}
+
+function runCD(v,sec,cb){
+  const ov=document.getElementById('cd'+v);
+  const nm=document.getElementById('cd'+v+'N');
+  ov.style.display='flex';nm.textContent=sec;
+  let s=sec;
+  const iv=setInterval(()=>{s--;nm.textContent=s;if(s<=0){clearInterval(iv);ov.style.display='none';cb();}},1000);
+}
+
+function runMeasure(v,cb){
+  const pf=document.getElementById('pf'+v);
+  let e=0;
+  const iv=setInterval(()=>{e+=0.1;pf.style.width=(e/10*100)+'%';if(e>=10){clearInterval(iv);pf.style.width='100%';cb();}},100);
+}
+
+function activateSide(cb){
+  document.getElementById('sideIdle').style.display='none';
+  const vs=document.getElementById('vidSide');
+  vs.style.display='block';
+  if(vidFront) vs.srcObject=vidFront;
+  setTimeout(cb,200);
+}
+
+function computeResults(){
+  document.getElementById('measureBtn').disabled=false;
+  document.getElementById('pfF').style.width='0%';
+  document.getElementById('pfS').style.width='0%';
+  const d={
+    tau:+(Math.random()*10+1).toFixed(1),
+    sh:+(Math.random()*6+0.5).toFixed(1),
+    pe:+(Math.random()*5+0.5).toFixed(1),
+    sag:+(Math.random()*8+1).toFixed(1),
+    psi:+(0.45+Math.random()*0.5).toFixed(2),
+    S:Math.round(60+Math.random()*35),
+    P:Math.round(40+Math.random()*50),
+    A:Math.round(50+Math.random()*45)
+  };
+  d.sync=Math.round(d.psi*100);
+  showResults(d);
+  switchTab('result');
+}
+
+function showResults(d){
+  document.getElementById('resEmpty').style.display='none';
+  document.getElementById('resContent').style.display='block';
+  const sc=v=>v>=80?'s-ok':v>=60?'s-mid':'s-bad';
+  document.getElementById('rSync').textContent=d.sync;
+  document.getElementById('rSync').className='sb-val '+sc(d.sync);
+  document.getElementById('rS').textContent=d.S;
+  document.getElementById('rP').textContent=d.P;
+  document.getElementById('rA').textContent=d.A;
+  document.getElementById('mtTau').textContent=d.tau;
+  document.getElementById('mtSh').textContent=d.sh;
+  document.getElementById('mtPe').textContent=d.pe;
+  document.getElementById('mtSag').textContent=d.sag;
+  document.getElementById('mtPsi').textContent=d.psi;
+  setTimeout(()=>{
+    document.getElementById('mfTau').style.width=Math.min(d.tau/15*100,100)+'%';
+    document.getElementById('mfSh').style.width=Math.min(d.sh/10*100,100)+'%';
+    document.getElementById('mfPe').style.width=Math.min(d.pe/10*100,100)+'%';
+    document.getElementById('mfSag').style.width=Math.min(d.sag/12*100,100)+'%';
+    document.getElementById('mfPsi').style.width=(d.psi*100)+'%';
+  },100);
+  document.getElementById('plLow').textContent=d.tau<3?'同期':'ズレ';
+  document.getElementById('plLow').style.color=d.tau<3?'var(--green)':'var(--red)';
+  document.getElementById('plMid').textContent=d.psi>0.7?'同期':'ズレ';
+  document.getElementById('plHigh').textContent='要計測';
+  drawPhase(d.psi);
+  const notes=[
+    `体軸回旋τ̂=${d.tau}°、Ψ=${d.psi}。低周波帯の位相同期は良好。構造スコアS=${d.S}。三機械ハブの介入適応あり。`,
+    `体軸回旋τ̂=${d.tau}°。肩・骨盤の位相ズレを検出。中等度の累積回旋。静岡メソッド術式A適応を検討してください。`,
+    `体軸回旋τ̂=${d.tau}°。顕著な位相ズレ。鬱熱蓄積の可能性。術式B（スウィングリリース）を推奨。`
+  ];
+  document.getElementById('clinNote').textContent=d.sync>=80?notes[0]:d.sync>=60?notes[1]:notes[2];
+}
+
+function drawPhase(psi){
+  const c=document.getElementById('phCanvas');
+  const ctx=c.getContext('2d');
+  ctx.clearRect(0,0,90,90);
+  const cx=45,cy=45;
+  const bands=[{r:14,color:'rgba(14,165,233,0.75)',phase:0},{r:24,color:'rgba(5,150,105,0.75)',phase:0.8},{r:34,color:'rgba(124,58,237,0.75)',phase:1.6}];
+  bands.forEach(b=>{
+    ctx.beginPath();ctx.arc(cx,cy,b.r,0,Math.PI*2);
+    ctx.strokeStyle=b.color.replace('0.75','0.15');ctx.lineWidth=1;ctx.stroke();
+    const x=cx+Math.cos(b.phase)*b.r,y=cy+Math.sin(b.phase)*b.r;
+    ctx.beginPath();ctx.arc(x,y,4,0,Math.PI*2);ctx.fillStyle=b.color;ctx.fill();
+  });
+}
+
+/* PATIENTS */
+function renderPatients(filter=''){
+  const list=document.getElementById('patientList');
+  const f=patients.filter(p=>p.name.includes(filter)||p.id.includes(filter));
+  if(!f.length){list.innerHTML='<div class="empty"><p>患者データがありません</p></div>';return;}
+  list.innerHTML=f.map(p=>`
+    <div class="patient-card" onclick="selectP('${p.id}')">
+      <div class="pc-r1"><span class="pc-name">${p.name}</span><span class="pc-id">#${p.id}</span></div>
+      <div class="pc-r2"><span class="pc-info">${p.age}歳${p.gender==='M'?' 男性':p.gender==='F'?' 女性':''} ${p.chief||''}</span><span class="pc-score ${p.lastScore>=80?'s-ok':p.lastScore>=60?'s-mid':'s-bad'}">${p.lastScore?p.lastScore+'pt':'未計測'}</span></div>
+    </div>`).join('');
+  const sel=document.getElementById('patientSelect');
+  sel.innerHTML='<option value="">-- 患者を選択 --</option>'+patients.map(p=>`<option value="${p.id}">${p.name}</option>`).join('');
+}
+function filterPatients(){renderPatients(document.getElementById('pSearch').value);}
+function selectP(id){document.getElementById('patientSelect').value=id;switchTab('camera');}
+function openModal(){document.getElementById('pId').value='P'+String(Date.now()).slice(-5);document.getElementById('modal').classList.add('open');}
+function closeModal(){document.getElementById('modal').classList.remove('open');}
+function savePatient(){
+  const name=document.getElementById('pName').value.trim();
+  if(!name){alert('患者名を入力してください');return;}
+  patients.unshift({id:document.getElementById('pId').value||'P'+Date.now(),name,age:document.getElementById('pAge').value||'--',gender:document.getElementById('pGender').value,chief:document.getElementById('pChief').value,lastScore:null,records:[]});
+  localStorage.setItem('axispro_p',JSON.stringify(patients));
+  closeModal();renderPatients();
+}
+
+/* HISTORY */
+let histRecs=JSON.parse(localStorage.getItem('axispro_recs')||'[]');
+function setRange(btn,r){document.querySelectorAll('.range-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');drawHistChart(r);}
+function drawHistChart(range='7d'){
+  const canvas=document.getElementById('histChart');
+  if(!canvas) return;
+  const dpr=window.devicePixelRatio||1;
+  canvas.width=canvas.offsetWidth*dpr;canvas.height=130*dpr;
+  const ctx=canvas.getContext('2d');ctx.scale(dpr,dpr);
+  const W=canvas.offsetWidth,H=130;
+  ctx.clearRect(0,0,W,H);
+  const n=range==='7d'?7:range==='1m'?30:90;
+  const data=Array.from({length:n},(_,i)=>histRecs[i]?.sync||Math.round(50+Math.random()*45));
+  const pad={t:8,b:20,l:6,r:6};
+  const gw=W-pad.l-pad.r,gh=H-pad.t-pad.b;
+  [0,50,100].forEach(v=>{
+    const y=pad.t+gh*(1-v/100);
+    ctx.beginPath();ctx.moveTo(pad.l,y);ctx.lineTo(W-pad.r,y);
+    ctx.strokeStyle='rgba(226,232,240,0.8)';ctx.lineWidth=1;ctx.stroke();
+  });
+  ctx.beginPath();
+  data.forEach((d,i)=>{const x=pad.l+i/(n-1)*gw;const y=pad.t+gh*(1-d/100);i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);});
+  ctx.strokeStyle='rgba(124,58,237,0.65)';ctx.lineWidth=2;ctx.stroke();
+  ctx.beginPath();
+  data.forEach((d,i)=>{const x=pad.l+i/(n-1)*gw;const y=pad.t+gh*(1-d/100);i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);});
+  ctx.lineTo(W-pad.r,H-pad.b);ctx.lineTo(pad.l,H-pad.b);ctx.closePath();
+  const grad=ctx.createLinearGradient(0,pad.t,0,H-pad.b);
+  grad.addColorStop(0,'rgba(124,58,237,0.15)');grad.addColorStop(1,'rgba(124,58,237,0)');
+  ctx.fillStyle=grad;ctx.fill();
+  data.forEach((d,i)=>{const x=pad.l+i/(n-1)*gw;const y=pad.t+gh*(1-d/100);ctx.beginPath();ctx.arc(x,y,3,0,Math.PI*2);ctx.fillStyle='var(--accent)';ctx.fill();});
+}
+
+window.addEventListener('load',()=>{initCamera();renderPatients();setTimeout(drawHistChart,200);});
+window.addEventListener('resize',()=>drawHistChart());
+</script>
+</body>
+</html>
