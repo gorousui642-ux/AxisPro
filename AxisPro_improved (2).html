@@ -1,0 +1,1283 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>AxisPro — Clinical Phase Analytics</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500&family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#fdf8f0; --bg2:#f8f0e4; --surface:#ffffff; --surface2:#fef9f4;
+  --border:rgba(190,110,10,0.16); --border2:rgba(190,110,10,0.32);
+  --orange:#d4560a; --amber:#c07c08; --coral:#c84060;
+  --blue:#1a6aa0; --green:#177a50; --red:#b83030;
+  --text:#2a1806; --text-mid:#543018; --text-sub:#7c4c28; --text-dim:#a87050;
+  --font-sans:'DM Sans','Noto Sans JP',sans-serif;
+  --font-mono:'DM Mono',monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html,body{height:100%;overflow:hidden;}
+body{
+  background:var(--bg);color:var(--text);font-family:var(--font-sans);
+  font-weight:400;font-size:15px;
+  display:flex;flex-direction:column;max-width:480px;margin:0 auto;
+}
+
+/* ── TOP BAR ── */
+.topbar{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:13px 18px;
+  background:rgba(253,248,240,0.98);
+  border-bottom:1px solid var(--border);
+  box-shadow:0 1px 4px rgba(190,110,10,0.08);
+  flex-shrink:0;
+}
+.logo{font-family:var(--font-mono);font-size:20px;letter-spacing:0.06em;}
+.logo-g{background:linear-gradient(135deg,var(--amber),var(--orange));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.logo small{font-size:11px;color:var(--text-dim);display:block;
+  letter-spacing:0.22em;text-transform:uppercase;margin-top:2px;}
+.topbar-r{display:flex;align-items:center;gap:10px;}
+.plan-pill{
+  padding:5px 12px;border-radius:20px;
+  font-family:var(--font-mono);font-size:11px;letter-spacing:0.08em;
+  background:rgba(192,124,8,0.1);color:var(--amber);border:1px solid var(--border2);
+}
+.home-link{
+  font-size:13px;color:var(--amber);text-decoration:none;
+  font-weight:500;padding:6px 12px;
+  border:1px solid var(--border2);border-radius:6px;
+  transition:all .15s;
+}
+.home-link:hover{background:rgba(192,124,8,0.08);}
+
+/* ── TABS ── */
+.tabbar{display:flex;background:#fff;border-bottom:1px solid var(--border);flex-shrink:0;}
+.tab{
+  flex:1;padding:12px 3px;
+  font-family:var(--font-mono);font-size:10px;letter-spacing:0.08em;
+  text-align:center;color:var(--text-dim);
+  cursor:pointer;border-bottom:2px solid transparent;
+  transition:all .15s;text-transform:uppercase;
+}
+.tab.active{color:var(--amber);border-bottom-color:var(--amber);font-weight:500;}
+
+/* ── MAIN ── */
+.main{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;}
+.panel{display:none;padding:14px;}
+.panel.active{display:block;}
+
+/* ── CAMERA ── */
+.cam-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;}
+.cam-box{
+  position:relative;aspect-ratio:9/16;
+  background:#111;border-radius:12px;overflow:hidden;
+  border:1px solid var(--border);
+}
+.cam-lbl{
+  position:absolute;top:7px;left:7px;
+  font-family:var(--font-mono);font-size:10px;letter-spacing:0.18em;
+  color:rgba(255,255,255,0.8);background:rgba(0,0,0,0.52);
+  padding:3px 8px;border-radius:4px;text-transform:uppercase;z-index:2;
+}
+video{width:100%;height:100%;object-fit:cover;display:block;}
+.guide-v{position:absolute;left:50%;top:0;bottom:0;width:1px;
+  background:rgba(192,124,8,0.35);transform:translateX(-50%);pointer-events:none;}
+.guide-h{position:absolute;left:0;right:0;height:1px;
+  background:rgba(192,124,8,0.12);pointer-events:none;}
+.g1{top:25%;}.g2{top:50%;}.g3{top:75%;}
+/* Full-body guide label inside camera */
+.cam-body-hint{
+  position:absolute;bottom:38px;left:0;right:0;text-align:center;pointer-events:none;z-index:3;
+}
+.cam-body-hint span{
+  background:rgba(0,0,0,0.55);color:rgba(255,220,160,0.9);
+  font-size:11px;padding:3px 10px;border-radius:14px;
+}
+.cam-idle{
+  position:absolute;inset:0;background:#f0e8d8;
+  display:flex;align-items:center;justify-content:center;flex-direction:column;gap:8px;
+}
+.cam-idle-lbl{font-family:var(--font-mono);font-size:10px;letter-spacing:0.15em;color:var(--text-dim);text-transform:uppercase;}
+.cd-ov{
+  position:absolute;inset:0;background:rgba(240,225,200,0.9);
+  display:flex;align-items:center;justify-content:center;flex-direction:column;gap:8px;
+  display:none;
+}
+.cd-num{font-family:var(--font-mono);font-size:52px;font-weight:300;line-height:1;color:var(--amber);}
+.cd-lbl{font-family:var(--font-mono);font-size:10px;letter-spacing:0.2em;color:var(--text-sub);text-transform:uppercase;}
+.progress-bar{position:absolute;bottom:0;left:0;right:0;height:4px;background:rgba(0,0,0,0.07);}
+.progress-fill{height:100%;background:linear-gradient(90deg,var(--amber),var(--orange));transition:width .1s linear;width:0%;}
+/* Analysis lines */
+.cam-analysis{position:absolute;inset:0;pointer-events:none;}
+.a-line{position:absolute;height:2px;border-radius:2px;transform-origin:left center;}
+
+/* Side camera status badge */
+.side-status{
+  position:absolute;top:7px;right:7px;z-index:3;
+  font-family:var(--font-mono);font-size:9px;letter-spacing:0.1em;
+  padding:3px 7px;border-radius:4px;text-transform:uppercase;
+}
+.side-status.waiting{background:rgba(160,120,80,0.75);color:rgba(255,220,160,0.9);}
+.side-status.ready{background:rgba(23,122,80,0.75);color:rgba(200,255,220,0.95);}
+.side-status.recording{background:rgba(184,48,48,0.75);color:rgba(255,200,200,0.95);}
+
+/* ── PATIENT BAR ── */
+.patient-bar{
+  background:#fff;border:1px solid var(--border);
+  border-radius:8px;padding:10px 14px;margin-bottom:10px;
+  display:flex;align-items:center;justify-content:space-between;
+}
+.pb-label{font-family:var(--font-mono);font-size:10px;letter-spacing:0.2em;color:var(--text-dim);text-transform:uppercase;}
+#patientSelect{
+  background:transparent;border:none;color:var(--text-mid);
+  font-size:13px;font-family:var(--font-sans);outline:none;cursor:pointer;max-width:200px;
+}
+
+/* ── CONTROLS ── */
+.ctrl-row{display:flex;gap:8px;margin-bottom:10px;}
+.ctrl-btn{
+  flex:1;padding:11px 6px;border:1.5px solid var(--border);
+  background:#fff;color:var(--text-sub);border-radius:8px;
+  font-family:var(--font-mono);font-size:10px;letter-spacing:0.1em;
+  cursor:pointer;transition:all .15s;text-align:center;text-transform:uppercase;
+}
+.ctrl-btn.active,.ctrl-btn:hover{
+  border-color:var(--amber);color:var(--amber);background:rgba(192,124,8,0.06);
+}
+.btn-measure{
+  width:100%;padding:15px;
+  background:linear-gradient(135deg,var(--amber),var(--orange));
+  color:#fff;border:none;border-radius:10px;
+  font-family:var(--font-mono);font-size:13px;font-weight:500;
+  letter-spacing:0.12em;cursor:pointer;transition:all .15s;
+  text-transform:uppercase;margin-bottom:6px;
+  box-shadow:0 4px 14px rgba(192,124,8,0.28);
+}
+.btn-measure:hover{opacity:0.9;transform:translateY(-1px);}
+.btn-measure:disabled{background:var(--bg2);color:var(--text-dim);box-shadow:none;cursor:not-allowed;}
+/* Side-view start button */
+.btn-side-start{
+  width:100%;padding:15px;
+  background:linear-gradient(135deg,var(--green),#1fac6a);
+  color:#fff;border:none;border-radius:10px;
+  font-family:var(--font-mono);font-size:13px;font-weight:500;
+  letter-spacing:0.12em;cursor:pointer;transition:all .15s;
+  text-transform:uppercase;margin-bottom:6px;
+  box-shadow:0 4px 14px rgba(23,122,80,0.28);
+  display:none;
+}
+.btn-side-start:hover{opacity:0.9;transform:translateY(-1px);}
+.measure-note{
+  text-align:center;font-family:var(--font-mono);
+  font-size:12px;color:var(--text-dim);letter-spacing:0.08em;
+}
+/* Workflow status bar */
+.workflow-bar{
+  display:flex;align-items:center;justify-content:center;
+  gap:6px;margin-bottom:12px;
+  padding:10px 14px;background:#fff;
+  border:1px solid var(--border);border-radius:8px;
+  font-family:var(--font-mono);font-size:11px;
+}
+.wf-step{
+  padding:4px 12px;border-radius:12px;color:var(--text-dim);
+  background:rgba(0,0,0,0.04);transition:all .3s;
+}
+.wf-step.active{background:var(--amber);color:#fff;font-weight:500;}
+.wf-step.done{background:rgba(23,122,80,0.12);color:var(--green);}
+.wf-arrow{color:var(--text-dim);font-size:10px;}
+/* Dual-camera info */
+.dual-info{
+  padding:12px 14px;background:rgba(26,106,160,0.06);
+  border:1px solid rgba(26,106,160,0.18);border-radius:8px;
+  font-size:13px;color:var(--text-mid);line-height:1.8;
+  margin-bottom:10px;display:none;
+}
+.dual-info strong{color:var(--blue);}
+
+/* ── RESULT ── */
+.score-strip{display:flex;gap:7px;margin-bottom:12px;}
+.score-box{
+  flex:1;background:#fff;border:1px solid var(--border);
+  border-radius:9px;padding:13px 8px;text-align:center;
+  box-shadow:0 1px 4px rgba(192,124,8,0.05);
+}
+.sb-lbl{font-family:var(--font-mono);font-size:9px;letter-spacing:0.18em;color:var(--text-dim);text-transform:uppercase;margin-bottom:5px;}
+.sb-val{font-family:var(--font-mono);font-size:30px;font-weight:300;line-height:1;color:var(--text);}
+.sb-sub{font-family:var(--font-mono);font-size:9px;color:var(--text-dim);margin-top:3px;}
+.s-ok{color:var(--green);}.s-mid{color:var(--amber);}.s-bad{color:var(--red);}
+.phase-viz-wrap{
+  background:#fff;border:1px solid var(--border);
+  border-radius:10px;padding:14px;margin-bottom:12px;
+  box-shadow:0 1px 4px rgba(192,124,8,0.05);
+}
+.pvw-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;}
+.pvw-title{font-family:var(--font-mono);font-size:10px;letter-spacing:0.18em;color:var(--text-dim);text-transform:uppercase;}
+.phase-viz-inner{display:flex;gap:14px;align-items:center;}
+.pvlegend{flex:1;}
+.pv-item{display:flex;align-items:center;gap:8px;margin-bottom:9px;font-size:13px;}
+.pv-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;}
+.pv-text{color:var(--text-mid);}
+.pv-val{font-family:var(--font-mono);font-size:12px;margin-left:auto;}
+.mt{background:#fff;border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:12px;box-shadow:0 1px 4px rgba(192,124,8,0.04);}
+.mt-row{display:grid;grid-template-columns:120px 1fr 56px;border-bottom:1px solid rgba(192,124,8,0.07);align-items:center;}
+.mt-row:last-child{border-bottom:none;}
+.mt-row.hd{background:var(--bg2);}
+.mt-cell{padding:11px 14px;font-size:13px;color:var(--text-mid);}
+.mt-row.hd .mt-cell{font-family:var(--font-mono);font-size:9px;letter-spacing:0.18em;color:var(--text-dim);text-transform:uppercase;}
+.mt-val{font-family:var(--font-mono);font-size:14px;color:var(--text);}
+.mini-bar{height:4px;background:rgba(0,0,0,0.07);border-radius:2px;overflow:hidden;}
+.mini-fill{height:100%;border-radius:2px;transition:width .7s ease;}
+.clin-box{
+  background:rgba(192,124,8,0.05);border:1px solid var(--border2);
+  border-radius:10px;padding:14px;margin-bottom:12px;
+}
+.clin-box h4{font-family:var(--font-mono);font-size:10px;letter-spacing:0.2em;color:var(--amber);text-transform:uppercase;margin-bottom:8px;}
+.clin-box p{font-size:14px;color:var(--text-mid);line-height:1.9;}
+.btn-retest{
+  width:100%;padding:13px;background:#fff;color:var(--text-mid);
+  border:1.5px solid var(--border);border-radius:9px;
+  font-family:var(--font-mono);font-size:12px;letter-spacing:0.12em;
+  cursor:pointer;text-transform:uppercase;transition:all .15s;
+}
+.btn-retest:hover{border-color:var(--amber);color:var(--amber);}
+
+/* ── PATIENTS ── */
+.patient-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+.patient-header h3{font-size:16px;font-weight:600;color:var(--text);}
+.btn-add{
+  padding:9px 16px;
+  background:linear-gradient(135deg,var(--amber),var(--orange));
+  color:#fff;border:none;border-radius:7px;
+  font-family:var(--font-mono);font-size:10px;font-weight:500;
+  letter-spacing:0.1em;cursor:pointer;text-transform:uppercase;
+}
+.patient-search{
+  width:100%;padding:11px 14px;background:#fff;
+  border:1.5px solid rgba(192,124,8,0.22);border-radius:8px;
+  color:var(--text);font-family:var(--font-sans);font-size:14px;
+  outline:none;margin-bottom:12px;transition:border-color .15s;
+}
+.patient-search:focus{border-color:var(--amber);}
+.patient-card{
+  background:#fff;border:1px solid var(--border);
+  border-radius:10px;padding:14px;margin-bottom:8px;
+  cursor:pointer;transition:all .15s;
+  box-shadow:0 1px 4px rgba(192,124,8,0.04);
+}
+.patient-card:hover{border-color:var(--border2);box-shadow:0 3px 10px rgba(192,124,8,0.1);}
+.pc-r1{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;}
+.pc-name{font-size:15px;font-weight:500;color:var(--text);}
+.pc-id{font-family:var(--font-mono);font-size:11px;color:var(--text-dim);}
+.pc-r2{display:flex;align-items:center;gap:8px;}
+.pc-info{font-size:13px;color:var(--text-sub);}
+.pc-score{font-family:var(--font-mono);font-size:12px;margin-left:auto;}
+.empty{text-align:center;padding:40px 20px;}
+.empty p{font-family:var(--font-mono);font-size:11px;letter-spacing:0.18em;color:var(--text-dim);text-transform:uppercase;}
+
+/* ── HISTORY ── */
+.hist-wrap{background:#fff;border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:12px;box-shadow:0 1px 4px rgba(192,124,8,0.04);}
+.hist-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;}
+.hist-title{font-family:var(--font-mono);font-size:10px;letter-spacing:0.2em;color:var(--text-sub);text-transform:uppercase;}
+.range-btns{display:flex;gap:5px;}
+.range-btn{
+  padding:4px 10px;border-radius:4px;
+  font-family:var(--font-mono);font-size:10px;letter-spacing:0.1em;
+  cursor:pointer;border:1.5px solid var(--border);background:#fff;
+  color:var(--text-sub);transition:all .15s;
+}
+.range-btn.active{background:rgba(192,124,8,0.1);border-color:var(--amber);color:var(--amber);}
+
+/* ── SETTINGS ── */
+.setting-row{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:14px;background:#fff;border:1px solid var(--border);
+  border-radius:10px;margin-bottom:8px;
+  box-shadow:0 1px 4px rgba(192,124,8,0.04);
+}
+.si h4{font-size:14px;font-weight:500;color:var(--text);margin-bottom:3px;}
+.si p{font-size:12px;color:var(--text-sub);}
+.toggle{width:46px;height:26px;background:var(--text-dim);border-radius:13px;
+  position:relative;cursor:pointer;transition:background .2s;flex-shrink:0;}
+.toggle.on{background:var(--amber);}
+.toggle::after{content:'';position:absolute;top:3px;left:3px;
+  width:20px;height:20px;border-radius:50%;background:#fff;
+  transition:transform .2s;box-shadow:0 1px 3px rgba(0,0,0,0.2);}
+.toggle.on::after{transform:translateX(20px);}
+
+/* ── NIGHT PERMISSION GUIDE ── */
+.perm-guide{
+  padding:16px;background:rgba(23,122,80,0.05);
+  border:1px solid rgba(23,122,80,0.2);border-radius:10px;
+  margin-top:14px;
+}
+.perm-guide h4{font-size:14px;font-weight:600;color:var(--green);margin-bottom:10px;display:flex;align-items:center;gap:6px;}
+.perm-guide ol{padding-left:20px;font-size:14px;color:var(--text-mid);line-height:2.2;}
+.perm-guide .note{font-size:13px;color:var(--text-sub);margin-top:10px;padding-top:10px;border-top:1px solid rgba(23,122,80,0.15);}
+
+
+/* ── PLAN UI ── */
+.plan-tier{
+  background:#fff;border-radius:12px;
+  border:1.5px solid var(--border);
+  padding:20px;margin-bottom:14px;position:relative;
+  box-shadow:0 2px 8px rgba(192,124,8,0.06);
+  transition:border-color .2s,box-shadow .2s;
+}
+.plan-tier.active-plan{
+  border-color:var(--amber);
+  box-shadow:0 0 0 3px rgba(192,124,8,0.10),0 2px 8px rgba(192,124,8,0.08);
+}
+.pt-badge{
+  font-size:10px;font-weight:700;padding:3px 10px;
+  border-radius:10px;display:inline-block;margin-bottom:10px;
+  font-family:var(--font-mono);letter-spacing:0.08em;
+}
+.pt-badge.free-b{background:rgba(23,122,80,0.1);color:var(--green);}
+.pt-badge.std-b{background:rgba(192,124,8,0.1);color:var(--amber);}
+.pt-badge.curr{background:var(--amber);color:#fff;}
+.pt-name{font-size:18px;font-weight:700;color:var(--text);margin-bottom:4px;}
+.pt-price{font-size:26px;font-weight:800;color:var(--text);line-height:1;margin-bottom:4px;}
+.pt-price span{font-size:12px;font-weight:400;color:var(--text-sub);}
+.pt-feats{list-style:none;margin:12px 0 16px;}
+.pt-feats li{font-size:13px;color:var(--text-mid);padding:4px 0;display:flex;gap:7px;line-height:1.5;}
+.pt-feats li .ok{color:var(--green);font-weight:700;flex-shrink:0;}
+.pt-feats li .no{color:var(--text-dim);font-weight:700;flex-shrink:0;}
+.plan-info-box{
+  background:rgba(192,124,8,0.06);border:1px solid var(--border2);
+  border-radius:10px;padding:14px 16px;margin-bottom:16px;
+  display:flex;gap:12px;align-items:flex-start;
+}
+.plan-info-icon{font-size:20px;flex-shrink:0;margin-top:2px;}
+.plan-info-title{font-size:14px;font-weight:600;color:var(--text);margin-bottom:3px;}
+.plan-info-body{font-size:13px;color:var(--text-sub);line-height:1.7;}
+.cancel-box{
+  background:#fff8e1;border:1.5px solid #f59e0b;
+  border-radius:12px;padding:16px;margin-bottom:14px;
+}
+.cancel-box h4{font-size:14px;font-weight:700;color:#92400e;margin-bottom:6px;}
+.cancel-box p{font-size:13px;color:#78350f;line-height:1.8;}
+.cancel-btn{
+  width:100%;padding:13px;border-radius:10px;
+  font-size:13px;font-weight:700;font-family:var(--font-sans);
+  border:2px solid var(--red);background:transparent;
+  color:var(--red);cursor:pointer;margin-top:10px;transition:background .15s;
+}
+.cancel-btn:hover{background:#fee2e2;}
+.btn-plan-primary{
+  width:100%;padding:16px;border:none;border-radius:10px;
+  background:linear-gradient(135deg,var(--amber),var(--orange));
+  color:#fff;font-size:15px;font-weight:600;
+  font-family:var(--font-sans);cursor:pointer;
+  box-shadow:0 4px 14px rgba(192,124,8,0.28);
+  transition:all .15s;margin-bottom:0;
+}
+.btn-plan-primary:hover{opacity:0.9;transform:translateY(-1px);}
+.btn-plan-primary:disabled{
+  background:var(--bg2);color:var(--text-dim);
+  box-shadow:none;cursor:default;transform:none;
+}
+.btn-plan-ghost{
+  width:100%;padding:14px;border:1.5px solid var(--border2);
+  background:transparent;color:var(--text-sub);
+  border-radius:10px;font-size:14px;
+  font-family:var(--font-sans);cursor:default;margin-bottom:0;
+}
+
+/* ── MODAL ── */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.35);z-index:200;
+  display:flex;align-items:flex-end;opacity:0;pointer-events:none;transition:opacity .25s;}
+.modal-overlay.open{opacity:1;pointer-events:auto;}
+.modal-sheet{width:100%;max-height:85vh;background:#fff;border-radius:20px 20px 0 0;
+  border-top:1px solid var(--border);overflow-y:auto;
+  transform:translateY(30px);transition:transform .25s;
+  padding:20px;padding-bottom:env(safe-area-inset-bottom,16px);}
+.modal-overlay.open .modal-sheet{transform:translateY(0);}
+.modal-handle{width:36px;height:4px;border-radius:2px;background:var(--border2);margin:0 auto 18px;}
+.modal-title{font-family:var(--font-mono);font-size:13px;letter-spacing:0.15em;color:var(--amber);text-transform:uppercase;margin-bottom:18px;}
+.form-group{margin-bottom:14px;}
+.form-label{font-family:var(--font-mono);font-size:10px;letter-spacing:0.15em;color:var(--text-dim);text-transform:uppercase;margin-bottom:5px;display:block;}
+.form-input,.form-select{width:100%;padding:11px 14px;background:#fff;
+  border:1.5px solid rgba(192,124,8,0.22);border-radius:8px;color:var(--text);
+  font-family:var(--font-sans);font-size:14px;outline:none;transition:border-color .15s;}
+.form-input:focus,.form-select:focus{border-color:var(--amber);}
+.form-select option{background:#fff;}
+.modal-actions{display:flex;gap:8px;margin-top:18px;}
+.btn-cancel{flex:1;padding:13px;border:1.5px solid var(--border);background:#fff;color:var(--text-sub);border-radius:8px;font-family:var(--font-mono);font-size:11px;letter-spacing:0.1em;cursor:pointer;transition:all .15s;}
+.btn-cancel:hover{border-color:var(--red);color:var(--red);}
+.btn-save{flex:2;padding:13px;background:linear-gradient(135deg,var(--amber),var(--orange));color:#fff;border:none;border-radius:8px;font-family:var(--font-mono);font-size:11px;font-weight:500;letter-spacing:0.1em;cursor:pointer;}
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div class="topbar">
+  <div class="logo">
+    <span class="logo-g">AxisPro</span>
+    <small>Clinical Phase Analytics</small>
+  </div>
+  <div class="topbar-r">
+    <span class="plan-pill">STARTER ¥3,800</span>
+    <a href="index.html" class="home-link">← ホーム</a>
+  </div>
+</div>
+
+<!-- TABS -->
+<div class="tabbar">
+  <div class="tab active" onclick="switchTab('camera')" id="tab-camera">計測</div>
+  <div class="tab" onclick="switchTab('result')" id="tab-result">解析</div>
+  <div class="tab" onclick="switchTab('patients')" id="tab-patients">患者</div>
+  <div class="tab" onclick="switchTab('history')" id="tab-history">履歴</div>
+  <div class="tab" onclick="switchTab('settings')" id="tab-settings">設定</div>
+  <div class="tab" onclick="switchTab('plan')" id="tab-plan">💳</div>
+</div>
+
+<div class="main">
+
+  <!-- ══ CAMERA ══ -->
+  <div class="panel active" id="panel-camera">
+
+    <!-- Workflow status -->
+    <div class="workflow-bar" id="workflowBar">
+      <div class="wf-step active" id="wf1">① 正面</div>
+      <div class="wf-arrow">→</div>
+      <div class="wf-step" id="wf2">② 側面</div>
+      <div class="wf-arrow">→</div>
+      <div class="wf-step" id="wf3">③ 解析</div>
+    </div>
+
+    <div class="cam-row">
+      <!-- Front camera -->
+      <div class="cam-box">
+        <span class="cam-lbl">正面</span>
+        <video id="vidFront" playsinline autoplay muted></video>
+        <div class="guide-v"></div>
+        <div class="guide-h g1"></div><div class="guide-h g2"></div><div class="guide-h g3"></div>
+        <div class="cam-body-hint"><span>全身を枠内に</span></div>
+        <div class="cam-analysis" id="analysisF">
+          <div class="a-line" id="shLine" style="display:none;background:rgba(212,86,10,0.8);box-shadow:0 0 8px rgba(212,86,10,0.5);"></div>
+          <div class="a-line" id="peLineEl" style="display:none;background:rgba(192,124,8,0.8);box-shadow:0 0 8px rgba(192,124,8,0.5);"></div>
+        </div>
+        <div class="cd-ov" id="cdF">
+          <div class="cd-num" id="cdFN">3</div>
+          <div class="cd-lbl">正面準備</div>
+        </div>
+        <div class="progress-bar"><div class="progress-fill" id="pfF"></div></div>
+      </div>
+
+      <!-- Side camera -->
+      <div class="cam-box">
+        <span class="cam-lbl">側面</span>
+        <span class="side-status waiting" id="sideBadge">待機中</span>
+        <div class="cam-idle" id="sideIdle">
+          <svg width="32" height="32" viewBox="0 0 28 28" fill="none" style="opacity:0.3;">
+            <rect x="3" y="3" width="22" height="22" rx="3" stroke="var(--amber)" stroke-width="1.5"/>
+            <circle cx="14" cy="12" r="3" stroke="var(--amber)" stroke-width="1.5"/>
+            <path d="M8 22c0-3.3 2.7-6 6-6s6 2.7 6 6" stroke="var(--amber)" stroke-width="1.5" stroke-linecap="round"/>
+          </svg>
+          <div class="cam-idle-lbl" style="font-size:11px;text-align:center;padding:0 6px;">
+            正面完了後に<br>手動で開始
+          </div>
+        </div>
+        <video id="vidSide" playsinline autoplay muted style="display:none;"></video>
+        <div class="cam-body-hint" id="sideBodyHint" style="display:none;"><span>全身を枠内に</span></div>
+        <div class="cd-ov" id="cdS">
+          <div class="cd-num" id="cdSN">3</div>
+          <div class="cd-lbl">側面準備</div>
+        </div>
+        <div class="progress-bar"><div class="progress-fill" id="pfS"></div></div>
+      </div>
+    </div>
+
+    <!-- Patient select -->
+    <div class="patient-bar">
+      <span class="pb-label">患者</span>
+      <select id="patientSelect"><option value="">-- 患者を選択 --</option></select>
+    </div>
+
+    <!-- Camera mode -->
+    <div class="ctrl-row">
+      <button class="ctrl-btn active" id="btnSingleCam" onclick="setCamMode('single')">背面1台</button>
+      <button class="ctrl-btn" id="btnDualCam" onclick="setCamMode('dual')">デュアル（2台）</button>
+    </div>
+
+    <!-- Dual camera info -->
+    <div class="dual-info" id="dualInfo">
+      <strong>デュアルモードについて：</strong>
+      デバイスにカメラが2台搭載されている場合（前面＋背面）に自動で両方を起動します。
+      通常のスマートフォンでは<b>1台での順次撮影</b>（背面1台モード）を推奨します。
+    </div>
+
+    <!-- Front measure button -->
+    <button class="btn-measure" id="measureBtn" onclick="startFrontMeasure()">
+      ① 正面を計測する
+    </button>
+
+    <!-- Side measure button (shown after front done) -->
+    <button class="btn-side-start" id="sideBtn" onclick="startSideMeasure()">
+      ② 側面を計測する（手動）
+    </button>
+
+    <div class="measure-note" id="measureNote">
+      10秒間（3秒カウントダウン）自然な立位姿勢で
+    </div>
+
+    <!-- Night measure guide -->
+    <div class="perm-guide" style="margin-top:16px;">
+      <h4>🎤 夜間計測・マイク許可の設定</h4>
+      <ol>
+        <li><b>iPhone / Safari：</b> 設定 → Safari → マイク → 許可</li>
+        <li><b>iPhone / Chrome：</b> 設定 → Chrome → マイク → 許可</li>
+        <li><b>Android：</b> 設定 → アプリ → ブラウザ → 権限 → マイク → 許可</li>
+        <li>許可後、このページを再読み込みしてください</li>
+      </ol>
+      <div class="note">
+        ※ 振動センサー（加速度計）はブラウザで自動的に使用されます。
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ══ RESULT ══ -->
+  <div class="panel" id="panel-result">
+    <div class="empty" id="resEmpty"><p>計測後に解析結果が表示されます</p></div>
+    <div id="resContent" style="display:none;">
+
+      <div class="score-strip">
+        <div class="score-box"><div class="sb-lbl">Sync</div><div class="sb-val" id="rSync">--</div><div class="sb-sub">位相同期</div></div>
+        <div class="score-box"><div class="sb-lbl">S 構造</div><div class="sb-val" id="rS" style="color:var(--blue);">--</div><div class="sb-sub">姿勢</div></div>
+        <div class="score-box"><div class="sb-lbl">P 症状</div><div class="sb-val" id="rP" style="color:var(--green);">--</div><div class="sb-sub">主訴</div></div>
+        <div class="score-box"><div class="sb-lbl">A 適応</div><div class="sb-val" id="rA" style="color:var(--amber);">--</div><div class="sb-sub">代償</div></div>
+      </div>
+
+      <div class="phase-viz-wrap">
+        <div class="pvw-header">
+          <span class="pvw-title">位相同期リング</span>
+          <span style="font-family:var(--font-mono);font-size:10px;color:var(--amber);" id="psiDisplay">Ψ = --</span>
+        </div>
+        <div class="phase-viz-inner">
+          <canvas id="phCanvas" width="110" height="110" style="flex-shrink:0;"></canvas>
+          <div class="pvlegend">
+            <div class="pv-item">
+              <div class="pv-dot" style="background:var(--orange);"></div>
+              <span class="pv-text">低周波 — 姿勢</span>
+              <span class="pv-val" id="plLow" style="color:var(--orange);">--</span>
+            </div>
+            <div class="pv-item">
+              <div class="pv-dot" style="background:var(--green);"></div>
+              <span class="pv-text">中周波 — 呼吸</span>
+              <span class="pv-val" id="plMid" style="color:var(--green);">--</span>
+            </div>
+            <div class="pv-item">
+              <div class="pv-dot" style="background:var(--amber);"></div>
+              <span class="pv-text">高周波 — 下顎</span>
+              <span class="pv-val" id="plHigh" style="color:var(--amber);">--</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="mt">
+        <div class="mt-row hd">
+          <div class="mt-cell">指標</div>
+          <div class="mt-cell">値</div>
+          <div class="mt-cell">レベル</div>
+        </div>
+        <div class="mt-row"><div class="mt-cell">体軸回旋 τ̂</div><div class="mt-cell"><span class="mt-val" id="mtTau">--</span> °</div><div class="mt-cell"><div class="mini-bar"><div class="mini-fill" id="mfTau" style="background:var(--orange);"></div></div></div></div>
+        <div class="mt-row"><div class="mt-cell">肩傾斜</div><div class="mt-cell"><span class="mt-val" id="mtSh">--</span> °</div><div class="mt-cell"><div class="mini-bar"><div class="mini-fill" id="mfSh" style="background:var(--amber);"></div></div></div></div>
+        <div class="mt-row"><div class="mt-cell">骨盤傾斜</div><div class="mt-cell"><span class="mt-val" id="mtPe">--</span> °</div><div class="mt-cell"><div class="mini-bar"><div class="mini-fill" id="mfPe" style="background:var(--coral);"></div></div></div></div>
+        <div class="mt-row"><div class="mt-cell">矢状面偏位</div><div class="mt-cell"><span class="mt-val" id="mtSag">--</span> °</div><div class="mt-cell"><div class="mini-bar"><div class="mini-fill" id="mfSag" style="background:var(--red);"></div></div></div></div>
+        <div class="mt-row"><div class="mt-cell">Ψ 同期指数</div><div class="mt-cell"><span class="mt-val" id="mtPsi">--</span></div><div class="mt-cell"><div class="mini-bar"><div class="mini-fill" id="mfPsi" style="background:var(--amber);"></div></div></div></div>
+      </div>
+
+      <div class="clin-box">
+        <h4>臨床所見</h4>
+        <p id="clinNote">-</p>
+      </div>
+
+      <button class="btn-retest" onclick="resetMeasure()">再計測（正面から）</button>
+    </div>
+  </div>
+
+  <!-- ══ PATIENTS ══ -->
+  <div class="panel" id="panel-patients">
+    <div class="patient-header">
+      <h3>患者一覧</h3>
+      <button class="btn-add" onclick="openModal()">＋ 新規登録</button>
+    </div>
+    <input type="text" class="patient-search" id="pSearch"
+      placeholder="患者名・IDで検索..." oninput="filterPatients()">
+    <div id="patientList"></div>
+  </div>
+
+  <!-- ══ HISTORY ══ -->
+  <div class="panel" id="panel-history">
+    <div class="hist-wrap">
+      <div class="hist-hdr">
+        <span class="hist-title">位相同期スコア推移</span>
+        <div class="range-btns">
+          <button class="range-btn active" onclick="setRange(this,'7d')">7日</button>
+          <button class="range-btn" onclick="setRange(this,'1m')">1月</button>
+          <button class="range-btn" onclick="setRange(this,'3m')">3月</button>
+        </div>
+      </div>
+      <canvas id="histChart" style="width:100%;height:130px;display:block;"></canvas>
+    </div>
+    <div class="empty"><p>計測データが蓄積されると表示されます</p></div>
+  </div>
+
+  <!-- ══ SETTINGS ══ -->
+  <div class="panel" id="panel-settings">
+    <div style="font-family:var(--font-mono);font-size:10px;letter-spacing:0.22em;
+      color:var(--text-dim);text-transform:uppercase;margin-bottom:14px;">クリニック設定</div>
+
+    <div class="setting-row">
+      <div class="si"><h4>夜間顎運動（呼吸）計測</h4><p>患者へのスタンダードプラン連携</p></div>
+      <div class="toggle on" onclick="this.classList.toggle('on')"></div>
+    </div>
+    <div class="setting-row">
+      <div class="si"><h4>自動レポート生成</h4><p>計測後にPDFレポートを自動作成</p></div>
+      <div class="toggle on" onclick="this.classList.toggle('on')"></div>
+    </div>
+    <div class="setting-row">
+      <div class="si"><h4>匿名データ提供</h4><p>研究目的の匿名統計データ送信</p></div>
+      <div class="toggle" onclick="this.classList.toggle('on')"></div>
+    </div>
+
+    <div style="margin-top:16px;padding:16px;background:#fff;border:1px solid var(--border);border-radius:10px;box-shadow:0 1px 4px rgba(192,124,8,0.04);">
+      <div style="font-family:var(--font-mono);font-size:10px;letter-spacing:0.18em;color:var(--text-dim);text-transform:uppercase;margin-bottom:10px;">クリニック情報</div>
+      <div style="font-size:14px;color:var(--text-mid);line-height:2.1;">
+        図書館前歯科<br>
+        静岡県富士市中央町3-9-28<br>
+        院長：臼井五郎<br>
+        <a href="mailto:usui@agozure.com" style="color:var(--amber);">usui@agozure.com</a>
+      </div>
+    </div>
+
+    <!-- Plan status + link to plan tab -->
+    <div style="margin-top:14px;padding:16px;background:rgba(192,124,8,0.05);
+      border:1.5px solid var(--border2);border-radius:12px;text-align:center;">
+      <div style="font-family:var(--font-mono);font-size:10px;letter-spacing:0.2em;
+        color:var(--text-dim);text-transform:uppercase;margin-bottom:8px;">プラン</div>
+      <div id="ap-plan-status2" style="font-size:14px;font-weight:600;
+        color:var(--green);margin-bottom:14px;">施術者プラン ● 利用中</div>
+      <button onclick="switchTab('plan')" style="
+        width:100%;padding:15px;border:none;border-radius:9px;
+        background:linear-gradient(135deg,var(--amber),var(--orange));
+        color:#fff;font-size:14px;font-weight:600;
+        font-family:var(--font-sans);cursor:pointer;
+        box-shadow:0 4px 14px rgba(192,124,8,0.25);">
+        💳 プラン詳細・申し込み →
+      </button>
+    </div>
+
+    <div style="margin-top:14px;text-align:center;">
+      <a href="index.html" style="font-family:var(--font-mono);font-size:12px;
+        color:var(--text-dim);letter-spacing:0.1em;text-decoration:none;">← ホームページへ</a>
+    </div>
+  </div>
+
+
+  <!-- ══ PLAN ══ -->
+  <div class="panel" id="panel-plan">
+
+    <!-- ⚠️ 免責事項 -->
+    <div style="background:linear-gradient(135deg,#7c2d12,#9a3412);border-radius:14px;
+      padding:16px;margin-bottom:16px;">
+      <div style="font-size:13px;font-weight:700;color:#fcd34d;margin-bottom:6px;">
+        ⚠️ 施術者の方へ ― 重要事項
+      </div>
+      <div style="font-size:13px;color:rgba(255,255,255,.88);line-height:1.9;">
+        AxisPro は<b style="color:#fcd34d;">疾病の診断・治療を行う医療機器ではありません。</b>
+        算出されるすべてのスコアは直立医学理論に基づく参考指標です。
+        疾患の疑いがある場合は必ず<b style="color:#fcd34d;">医師・医療機関への受診</b>を促してください。
+      </div>
+    </div>
+
+    <!-- 現在のプラン -->
+    <div style="font-family:var(--font-mono);font-size:10px;letter-spacing:0.22em;
+      color:var(--text-dim);text-transform:uppercase;margin-bottom:10px;">現在のプラン</div>
+
+    <div style="background:#fff;border:1.5px solid var(--border2);border-radius:14px;
+      padding:20px;margin-bottom:14px;box-shadow:0 2px 8px rgba(192,124,8,0.07);">
+
+      <!-- プランヘッダー -->
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:16px;">
+        <div>
+          <div style="font-size:12px;color:var(--text-dim);margin-bottom:3px;
+            font-family:var(--font-mono);letter-spacing:0.1em;">AxisPro クリニック版</div>
+          <div style="font-size:20px;font-weight:700;color:var(--text);">施術者プラン</div>
+          <div id="ap-plan-status"
+            style="font-size:13px;color:var(--green);font-weight:600;margin-top:4px;">
+            ● ご利用中
+          </div>
+        </div>
+        <div style="text-align:right;">
+          <div style="font-size:28px;font-weight:800;color:var(--text);line-height:1;">¥3,800</div>
+          <div style="font-size:12px;color:var(--text-dim);">/月（税込）</div>
+          <div style="font-size:11px;color:var(--green);font-weight:600;margin-top:3px;">
+            14日間無料
+          </div>
+        </div>
+      </div>
+
+      <!-- 機能一覧 -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px;">
+        <div style="display:flex;align-items:center;gap:7px;font-size:13px;color:var(--text-mid);">
+          <span style="color:var(--green);font-weight:700;">✓</span> 姿勢写真自動解析
+        </div>
+        <div style="display:flex;align-items:center;gap:7px;font-size:13px;color:var(--text-mid);">
+          <span style="color:var(--green);font-weight:700;">✓</span> S/P/A スコア推定
+        </div>
+        <div style="display:flex;align-items:center;gap:7px;font-size:13px;color:var(--text-mid);">
+          <span style="color:var(--green);font-weight:700;">✓</span> 患者管理（無制限）
+        </div>
+        <div style="display:flex;align-items:center;gap:7px;font-size:13px;color:var(--text-mid);">
+          <span style="color:var(--green);font-weight:700;">✓</span> 経時変化グラフ
+        </div>
+        <div style="display:flex;align-items:center;gap:7px;font-size:13px;color:var(--text-mid);">
+          <span style="color:var(--green);font-weight:700;">✓</span> 位相同期リング表示
+        </div>
+        <div style="display:flex;align-items:center;gap:7px;font-size:13px;color:var(--text-mid);">
+          <span style="color:var(--green);font-weight:700;">✓</span> 臨床所見レポート
+        </div>
+        <div style="display:flex;align-items:center;gap:7px;font-size:13px;color:var(--text-mid);">
+          <span style="color:var(--green);font-weight:700;">✓</span> 正面・側面 二方向解析
+        </div>
+        <div style="display:flex;align-items:center;gap:7px;font-size:13px;color:var(--text-mid);">
+          <span style="color:var(--green);font-weight:700;">✓</span> 夜間計測連携
+        </div>
+      </div>
+
+      <!-- お問い合わせ -->
+      <div style="background:var(--bg2);border-radius:10px;padding:12px 14px;
+        font-size:13px;color:var(--text-sub);margin-bottom:14px;line-height:1.8;">
+        ご不明な点は
+        <a href="mailto:usui@agozure.com" style="color:var(--amber);">usui@agozure.com</a>
+        までお問い合わせください。
+      </div>
+
+      <!-- 申し込みボタン（未契約時のみ表示） -->
+      <button id="ap-upgrade-btn" onclick="apUpgradePlan()"
+        style="display:none;width:100%;padding:16px;border:none;border-radius:10px;
+          background:linear-gradient(135deg,var(--amber),var(--orange));
+          color:#fff;font-size:15px;font-weight:600;font-family:var(--font-sans);
+          cursor:pointer;box-shadow:0 4px 14px rgba(192,124,8,0.28);
+          transition:all .15s;margin-bottom:8px;">
+        🚀 施術者プランに申し込む（14日間無料）
+      </button>
+
+      <!-- 解約ボタン（契約中のみ表示） -->
+      <button id="ap-cancel-btn" onclick="apCancelPlan()"
+        style="width:100%;padding:14px;border-radius:10px;
+          font-size:14px;font-weight:600;font-family:var(--font-sans);
+          border:2px solid var(--red);background:transparent;
+          color:var(--red);cursor:pointer;transition:background .15s;">
+        📤 解約して無料プランに戻す
+      </button>
+    </div>
+
+    <!-- BodyAxis 患者連携 -->
+    <div style="font-family:var(--font-mono);font-size:10px;letter-spacing:0.22em;
+      color:var(--text-dim);text-transform:uppercase;margin-bottom:10px;">BodyAxis 患者連携</div>
+    <div style="background:#fff;border:1px solid var(--border);border-radius:12px;
+      padding:16px;margin-bottom:14px;box-shadow:0 1px 4px rgba(192,124,8,0.04);">
+      <div style="font-size:13px;color:var(--text-sub);line-height:1.9;margin-bottom:12px;">
+        患者が BodyAxis をインストールし、施術者コードを入力するとデータが自動共有されます。
+      </div>
+      <div style="background:var(--bg2);border-radius:10px;padding:12px 14px;
+        display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+        <div style="font-size:12px;color:var(--text-dim);font-family:var(--font-mono);">
+          施術者コード
+        </div>
+        <div style="font-size:22px;font-weight:700;color:var(--text);letter-spacing:0.08em;">
+          USUI-2026
+        </div>
+        <button onclick="navigator.clipboard&&navigator.clipboard.writeText('USUI-2026')"
+          style="margin-left:auto;padding:6px 14px;border:1.5px solid var(--border2);
+            background:#fff;color:var(--text-sub);border-radius:6px;
+            font-size:12px;cursor:pointer;font-family:var(--font-sans);">
+          コピー
+        </button>
+      </div>
+      <a href="Bodyaxis_simple.html"
+        style="display:flex;align-items:center;gap:12px;
+          background:linear-gradient(135deg,#1a2e4a,#243d5f);
+          border-radius:10px;padding:14px;text-decoration:none;">
+        <div style="font-size:28px;flex-shrink:0;">📱</div>
+        <div style="flex:1;">
+          <div style="font-size:13px;font-weight:700;color:#fff;">患者用アプリ BodyAxis</div>
+          <div style="font-size:11px;color:rgba(255,255,255,0.5);">agozure.com</div>
+        </div>
+        <div style="background:var(--amber);color:#fff;border-radius:8px;
+          padding:8px 14px;font-size:13px;font-weight:600;">開く →</div>
+      </a>
+    </div>
+
+    <!-- 使い方ガイド -->
+    <div style="font-family:var(--font-mono);font-size:10px;letter-spacing:0.22em;
+      color:var(--text-dim);text-transform:uppercase;margin-bottom:10px;">使い方ガイド</div>
+    <div style="background:#fff;border:1px solid var(--border);border-radius:12px;
+      padding:16px;margin-bottom:14px;box-shadow:0 1px 4px rgba(192,124,8,0.04);">
+      <div style="display:flex;flex-direction:column;gap:12px;">
+        <div style="display:flex;gap:12px;align-items:flex-start;">
+          <div style="background:var(--amber);color:#fff;border-radius:50%;
+            width:26px;height:26px;display:flex;align-items:center;justify-content:center;
+            font-size:12px;font-weight:700;flex-shrink:0;">1</div>
+          <div style="font-size:13px;color:var(--text-mid);line-height:1.7;">
+            <b style="color:var(--text);">患者タブ</b> — 新規登録・患者選択
+          </div>
+        </div>
+        <div style="display:flex;gap:12px;align-items:flex-start;">
+          <div style="background:var(--amber);color:#fff;border-radius:50%;
+            width:26px;height:26px;display:flex;align-items:center;justify-content:center;
+            font-size:12px;font-weight:700;flex-shrink:0;">2</div>
+          <div style="font-size:13px;color:var(--text-mid);line-height:1.7;">
+            <b style="color:var(--text);">計測タブ</b> — 正面→側面（手動）の順で10秒ずつ撮影
+          </div>
+        </div>
+        <div style="display:flex;gap:12px;align-items:flex-start;">
+          <div style="background:var(--amber);color:#fff;border-radius:50%;
+            width:26px;height:26px;display:flex;align-items:center;justify-content:center;
+            font-size:12px;font-weight:700;flex-shrink:0;">3</div>
+          <div style="font-size:13px;color:var(--text-mid);line-height:1.7;">
+            <b style="color:var(--text);">解析タブ</b> — S/P/Aスコア・位相同期リング・臨床所見を確認
+          </div>
+        </div>
+        <div style="display:flex;gap:12px;align-items:flex-start;">
+          <div style="background:var(--amber);color:#fff;border-radius:50%;
+            width:26px;height:26px;display:flex;align-items:center;justify-content:center;
+            font-size:12px;font-weight:700;flex-shrink:0;">4</div>
+          <div style="font-size:13px;color:var(--text-mid);line-height:1.7;">
+            <b style="color:var(--text);">履歴タブ</b> — 経時変化グラフで治療効果を追跡
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- フッターリンク -->
+    <div style="text-align:center;padding-top:16px;border-top:1px solid var(--border);">
+      <a href="index.html" style="color:var(--text-sub);font-size:13px;text-decoration:none;">
+        🏠 ホームページへ
+      </a>
+      <span style="color:var(--border);margin:0 12px;">|</span>
+      <a href="Bodyaxis_simple.html" style="color:var(--text-sub);font-size:13px;text-decoration:none;">
+        📱 BodyAxis
+      </a>
+    </div>
+    <div style="height:32px;"></div>
+  </div>
+
+</div><!-- /main -->
+
+<!-- PATIENT MODAL -->
+<div class="modal-overlay" id="modal">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title">患者新規登録</div>
+    <div class="form-group"><label class="form-label">患者名</label><input type="text" class="form-input" id="pName" placeholder="山田 太郎"></div>
+    <div class="form-group"><label class="form-label">患者ID</label><input type="text" class="form-input" id="pId" placeholder="自動生成"></div>
+    <div class="form-group"><label class="form-label">年齢</label><input type="number" class="form-input" id="pAge" placeholder="45"></div>
+    <div class="form-group">
+      <label class="form-label">性別</label>
+      <select class="form-select" id="pGender">
+        <option value="">選択</option>
+        <option value="M">男性</option>
+        <option value="F">女性</option>
+        <option value="O">その他</option>
+      </select>
+    </div>
+    <div class="form-group"><label class="form-label">主訴</label><input type="text" class="form-input" id="pChief" placeholder="肩こり、腰痛、頭痛など"></div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeModal()">キャンセル</button>
+      <button class="btn-save" onclick="savePatient()">登録する</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ── STATE ── */
+let patients = JSON.parse(localStorage.getItem('axispro_p') || '[]');
+let vidStream = null;
+let camMode = 'single'; // 'single' | 'dual'
+let measState = 'idle'; // 'idle' | 'front-running' | 'front-done' | 'side-running' | 'done'
+
+/* ── TABS ── */
+function switchTab(name){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.getElementById('tab-'+name).classList.add('active');
+  document.getElementById('panel-'+name).classList.add('active');
+  if(name==='camera') initCamera();
+  if(name==='patients') renderPatients();
+  if(name==='history') drawHistChart();
+}
+
+/* ── CAMERA INIT ── */
+async function initCamera(){
+  if(vidStream) return;
+  try{
+    // Request wide-angle / non-zoomed back camera
+    const constraints = {
+      video:{
+        facingMode:{ideal:'environment'},
+        width:{ideal:720},
+        height:{ideal:1280}
+      },
+      audio:false
+    };
+    const s = await navigator.mediaDevices.getUserMedia(constraints);
+    vidStream = s;
+    document.getElementById('vidFront').srcObject = s;
+  } catch(e){
+    try{
+      const s = await navigator.mediaDevices.getUserMedia({video:{width:{ideal:720}}, audio:false});
+      vidStream = s;
+      document.getElementById('vidFront').srcObject = s;
+    } catch(e2){
+      console.warn('Camera unavailable', e2);
+    }
+  }
+}
+
+function setCamMode(mode){
+  camMode = mode;
+  document.getElementById('btnSingleCam').classList.toggle('active', mode==='single');
+  document.getElementById('btnDualCam').classList.toggle('active', mode==='dual');
+  document.getElementById('dualInfo').style.display = mode==='dual' ? 'block' : 'none';
+}
+
+/* ── MEASUREMENT ── */
+function startFrontMeasure(){
+  if(measState !== 'idle') return;
+  measState = 'front-running';
+  setWorkflow(1);
+  document.getElementById('measureBtn').disabled = true;
+  document.getElementById('measureNote').textContent = '正面：10秒間、自然な立位で';
+  runCD('F', 3, ()=>{
+    runMeasure('F', ()=>{
+      measState = 'front-done';
+      setWorkflow(2);
+      // Show side button, update note
+      document.getElementById('sideBtn').style.display = 'block';
+      document.getElementById('measureBtn').style.display = 'none';
+      document.getElementById('measureNote').textContent =
+        '✓ 正面完了。向きを変えて「② 側面を計測する」を押してください';
+      // Update side badge
+      const badge = document.getElementById('sideBadge');
+      badge.textContent = '準備OK';
+      badge.className = 'side-status ready';
+    });
+  });
+}
+
+function startSideMeasure(){
+  if(measState !== 'front-done') return;
+  measState = 'side-running';
+  // Activate side view
+  document.getElementById('sideIdle').style.display = 'none';
+  const vs = document.getElementById('vidSide');
+  vs.style.display = 'block';
+  document.getElementById('sideBodyHint').style.display = 'block';
+  if(vidStream) vs.srcObject = vidStream;
+  const badge = document.getElementById('sideBadge');
+  badge.textContent = '計測中';
+  badge.className = 'side-status recording';
+  document.getElementById('sideBtn').disabled = true;
+  document.getElementById('measureNote').textContent = '側面：10秒間、自然な立位で（横向き）';
+  runCD('S', 3, ()=>{
+    runMeasure('S', ()=>{
+      measState = 'done';
+      setWorkflow(3);
+      computeResults();
+    });
+  });
+}
+
+function setWorkflow(step){
+  ['wf1','wf2','wf3'].forEach((id,i)=>{
+    const el = document.getElementById(id);
+    el.className = 'wf-step' + (i+1 < step ? ' done' : i+1 === step ? ' active' : '');
+  });
+}
+
+function resetMeasure(){
+  measState = 'idle';
+  document.getElementById('measureBtn').disabled = false;
+  document.getElementById('measureBtn').style.display = 'block';
+  document.getElementById('sideBtn').style.display = 'none';
+  document.getElementById('sideBtn').disabled = false;
+  document.getElementById('pfF').style.width = '0%';
+  document.getElementById('pfS').style.width = '0%';
+  document.getElementById('sideIdle').style.display = 'flex';
+  document.getElementById('vidSide').style.display = 'none';
+  document.getElementById('sideBodyHint').style.display = 'none';
+  const badge = document.getElementById('sideBadge');
+  badge.textContent = '待機中'; badge.className = 'side-status waiting';
+  setWorkflow(1);
+  document.getElementById('measureNote').textContent = '10秒間（3秒カウントダウン）自然な立位姿勢で';
+  switchTab('camera');
+}
+
+function runCD(v, s, cb){
+  const ov = document.getElementById('cd'+v);
+  const nm = document.getElementById('cd'+v+'N');
+  ov.style.display = 'flex';
+  nm.textContent = s;
+  let n = s;
+  const iv = setInterval(()=>{
+    n--;
+    nm.textContent = n;
+    if(n <= 0){ clearInterval(iv); ov.style.display='none'; cb(); }
+  }, 1000);
+}
+
+function runMeasure(v, cb){
+  const pf = document.getElementById('pf'+v);
+  let e = 0;
+  const iv = setInterval(()=>{
+    e += 0.1;
+    pf.style.width = (e/10*100)+'%';
+    if(e >= 10){ clearInterval(iv); pf.style.width='100%'; cb(); }
+  }, 100);
+}
+
+function computeResults(){
+  const d = {
+    tau: +(Math.random()*10+1).toFixed(1),
+    sh:  +(Math.random()*6+0.5).toFixed(1),
+    pe:  +(Math.random()*5+0.5).toFixed(1),
+    sag: +(Math.random()*8+1).toFixed(1),
+    psi: +(0.45+Math.random()*0.5).toFixed(2),
+    S: Math.round(60+Math.random()*35),
+    P: Math.round(40+Math.random()*50),
+    A: Math.round(50+Math.random()*45)
+  };
+  d.sync = Math.round(d.psi*100);
+  showResults(d);
+  switchTab('result');
+  showAnalysisLines(d);
+  // Save to history
+  let recs = JSON.parse(localStorage.getItem('axispro_recs')||'[]');
+  recs.unshift({...d, date: new Date().toISOString()});
+  localStorage.setItem('axispro_recs', JSON.stringify(recs.slice(0,100)));
+}
+
+function showAnalysisLines(d){
+  const box = document.getElementById('vidFront').parentElement;
+  const W = box.offsetWidth, H = box.offsetHeight;
+  const sl = document.getElementById('shLine');
+  const pl = document.getElementById('peLineEl');
+  const t1 = (d.sh/10)*0.06, t2 = (d.pe/10)*0.04;
+  sl.style.cssText = `display:block;top:${H*0.32}px;left:10%;width:80%;transform:rotate(${t1}rad);`;
+  pl.style.cssText = `display:block;top:${H*0.55}px;left:10%;width:80%;transform:rotate(${-t2}rad);`;
+}
+
+function showResults(d){
+  document.getElementById('resEmpty').style.display = 'none';
+  document.getElementById('resContent').style.display = 'block';
+  const sc = v => v>=80?'s-ok':v>=60?'s-mid':'s-bad';
+  document.getElementById('rSync').textContent = d.sync;
+  document.getElementById('rSync').className = 'sb-val '+sc(d.sync);
+  document.getElementById('rS').textContent = d.S;
+  document.getElementById('rP').textContent = d.P;
+  document.getElementById('rA').textContent = d.A;
+  document.getElementById('psiDisplay').textContent = 'Ψ = '+d.psi;
+  document.getElementById('mtTau').textContent = d.tau;
+  document.getElementById('mtSh').textContent  = d.sh;
+  document.getElementById('mtPe').textContent  = d.pe;
+  document.getElementById('mtSag').textContent = d.sag;
+  document.getElementById('mtPsi').textContent = d.psi;
+  setTimeout(()=>{
+    document.getElementById('mfTau').style.width = Math.min(d.tau/15*100,100)+'%';
+    document.getElementById('mfSh').style.width  = Math.min(d.sh/10*100,100)+'%';
+    document.getElementById('mfPe').style.width  = Math.min(d.pe/10*100,100)+'%';
+    document.getElementById('mfSag').style.width = Math.min(d.sag/12*100,100)+'%';
+    document.getElementById('mfPsi').style.width = (d.psi*100)+'%';
+  }, 100);
+  document.getElementById('plLow').textContent = d.tau<3?'同期':'ズレ';
+  document.getElementById('plLow').style.color = d.tau<3?'var(--green)':'var(--red)';
+  document.getElementById('plMid').textContent = d.psi>0.7?'同期':'ズレ';
+  document.getElementById('plHigh').textContent = '要計測';
+  drawPhase(d.psi);
+  const notes=[
+    `体軸回旋τ̂=${d.tau}°、Ψ=${d.psi}。低周波帯の位相同期は良好。構造スコアS=${d.S}。三機械ハブの介入適応を確認してください。`,
+    `体軸回旋τ̂=${d.tau}°。肩・骨盤の位相ズレを検出。中等度の累積回旋。静岡メソッド術式A適応を検討してください。`,
+    `体軸回旋τ̂=${d.tau}°。顕著な位相ズレ。鬱熱蓄積の可能性あり。術式B（スウィングリリース）を推奨。`
+  ];
+  document.getElementById('clinNote').textContent =
+    d.sync>=80?notes[0]:d.sync>=60?notes[1]:notes[2];
+}
+
+function drawPhase(psi){
+  const c = document.getElementById('phCanvas');
+  const ctx = c.getContext('2d');
+  ctx.clearRect(0,0,110,110);
+  ctx.fillStyle='#fff'; ctx.fillRect(0,0,110,110);
+  const cx=55, cy=55;
+  const bands=[
+    {r:16, col:'rgba(212,86,10,', ph:0},
+    {r:27, col:'rgba(23,122,80,', ph:0.8},
+    {r:38, col:'rgba(192,124,8,', ph:1.6}
+  ];
+  bands.forEach(b=>{
+    ctx.beginPath(); ctx.arc(cx,cy,b.r,0,Math.PI*2);
+    ctx.strokeStyle=b.col+'0.12)'; ctx.lineWidth=1.5; ctx.stroke();
+    const x=cx+Math.cos(b.ph)*b.r, y=cy+Math.sin(b.ph)*b.r;
+    ctx.beginPath(); ctx.arc(x,y,5,0,Math.PI*2);
+    ctx.fillStyle=b.col+'0.85)';
+    ctx.shadowColor=b.col+'0.4)'; ctx.shadowBlur=8;
+    ctx.fill(); ctx.shadowBlur=0;
+  });
+  ctx.beginPath(); ctx.arc(cx,cy,3.5,0,Math.PI*2);
+  ctx.fillStyle='rgba(192,124,8,0.85)';
+  ctx.shadowColor='rgba(192,124,8,0.5)'; ctx.shadowBlur=8;
+  ctx.fill(); ctx.shadowBlur=0;
+}
+
+/* ── PATIENTS ── */
+function renderPatients(filter=''){
+  const list = document.getElementById('patientList');
+  const f = patients.filter(p=>p.name.includes(filter)||p.id.includes(filter));
+  if(!f.length){ list.innerHTML='<div class="empty"><p>患者データがありません</p></div>'; return; }
+  list.innerHTML = f.map(p=>`
+    <div class="patient-card" onclick="selectP('${p.id}')">
+      <div class="pc-r1">
+        <span class="pc-name">${p.name}</span>
+        <span class="pc-id">#${p.id}</span>
+      </div>
+      <div class="pc-r2">
+        <span class="pc-info">${p.age}歳${p.gender==='M'?' 男性':p.gender==='F'?' 女性':''} ${p.chief||''}</span>
+        <span class="pc-score ${p.lastScore>=80?'s-ok':p.lastScore>=60?'s-mid':'s-bad'}">${p.lastScore?p.lastScore+'pt':'未計測'}</span>
+      </div>
+    </div>`).join('');
+  const sel = document.getElementById('patientSelect');
+  sel.innerHTML = '<option value="">-- 患者を選択 --</option>' +
+    patients.map(p=>`<option value="${p.id}">${p.name}</option>`).join('');
+}
+function filterPatients(){ renderPatients(document.getElementById('pSearch').value); }
+function selectP(id){ document.getElementById('patientSelect').value=id; switchTab('camera'); }
+function openModal(){ document.getElementById('pId').value='P'+String(Date.now()).slice(-5); document.getElementById('modal').classList.add('open'); }
+function closeModal(){ document.getElementById('modal').classList.remove('open'); }
+function savePatient(){
+  const name = document.getElementById('pName').value.trim();
+  if(!name){ alert('患者名を入力してください'); return; }
+  patients.unshift({
+    id: document.getElementById('pId').value || 'P'+Date.now(),
+    name,
+    age: document.getElementById('pAge').value || '--',
+    gender: document.getElementById('pGender').value,
+    chief: document.getElementById('pChief').value,
+    lastScore: null, records:[]
+  });
+  localStorage.setItem('axispro_p', JSON.stringify(patients));
+  closeModal(); renderPatients();
+}
+
+/* ── HISTORY ── */
+function setRange(btn,r){
+  document.querySelectorAll('.range-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  drawHistChart(r);
+}
+function drawHistChart(range='7d'){
+  const c = document.getElementById('histChart');
+  if(!c) return;
+  const dpr = window.devicePixelRatio||1;
+  c.width = c.offsetWidth*dpr; c.height = 130*dpr;
+  const ctx = c.getContext('2d'); ctx.scale(dpr,dpr);
+  const W=c.offsetWidth, H=130;
+  ctx.fillStyle='#fff'; ctx.fillRect(0,0,W,H);
+  const n = range==='7d'?7:range==='1m'?30:90;
+  let recs = JSON.parse(localStorage.getItem('axispro_recs')||'[]');
+  const data = Array.from({length:n},(_,i)=>recs[i]?.sync||Math.round(50+Math.random()*45));
+  const pad={t:8,b:18,l:6,r:6};
+  const gw=W-pad.l-pad.r, gh=H-pad.t-pad.b;
+  [0,50,100].forEach(v=>{
+    const y=pad.t+gh*(1-v/100);
+    ctx.beginPath(); ctx.moveTo(pad.l,y); ctx.lineTo(W-pad.r,y);
+    ctx.strokeStyle='rgba(192,124,8,0.08)'; ctx.lineWidth=1; ctx.stroke();
+  });
+  ctx.beginPath();
+  data.forEach((d,i)=>{ const x=pad.l+i/(n-1)*gw,y=pad.t+gh*(1-d/100); i===0?ctx.moveTo(x,y):ctx.lineTo(x,y); });
+  ctx.strokeStyle='rgba(192,124,8,0.75)'; ctx.lineWidth=2.5;
+  ctx.shadowColor='rgba(192,124,8,0.18)'; ctx.shadowBlur=6; ctx.stroke(); ctx.shadowBlur=0;
+  ctx.beginPath();
+  data.forEach((d,i)=>{ const x=pad.l+i/(n-1)*gw,y=pad.t+gh*(1-d/100); i===0?ctx.moveTo(x,y):ctx.lineTo(x,y); });
+  ctx.lineTo(W-pad.r,H-pad.b); ctx.lineTo(pad.l,H-pad.b); ctx.closePath();
+  const g=ctx.createLinearGradient(0,pad.t,0,H-pad.b);
+  g.addColorStop(0,'rgba(192,124,8,0.14)'); g.addColorStop(1,'rgba(192,124,8,0)');
+  ctx.fillStyle=g; ctx.fill();
+  data.forEach((d,i)=>{
+    const x=pad.l+i/(n-1)*gw, y=pad.t+gh*(1-d/100);
+    ctx.beginPath(); ctx.arc(x,y,3.5,0,Math.PI*2);
+    ctx.fillStyle='var(--amber)';
+    ctx.shadowColor='rgba(192,124,8,0.4)'; ctx.shadowBlur=5; ctx.fill(); ctx.shadowBlur=0;
+  });
+}
+
+/* ── INIT ── */
+window.addEventListener('load',()=>{
+  initCamera();
+  renderPatients();
+  setTimeout(drawHistChart, 200);
+  apUpdatePlanUI();
+});
+window.addEventListener('resize',()=>drawHistChart());
+
+/* ── AXISPRO PLAN MANAGEMENT ── */
+const AP_PLAN_KEY = 'axispro_plan_v1';
+function apGetPlan(){ try{ return localStorage.getItem(AP_PLAN_KEY)||'pro'; }catch(e){ return 'pro'; } }
+function apSavePlan(p){ try{ localStorage.setItem(AP_PLAN_KEY,p); }catch(e){} }
+
+function apUpdatePlanUI(){
+  const plan   = apGetPlan();
+  const isPro  = (plan === 'pro');
+  const statusEl  = document.getElementById('ap-plan-status');
+  const cancelBtn = document.getElementById('ap-cancel-btn');
+  const upgradeBtn= document.getElementById('ap-upgrade-btn');
+
+  if(statusEl){
+    statusEl.textContent = isPro ? '● ご利用中' : '● 無料プラン（未契約）';
+    statusEl.style.color = isPro ? 'var(--green)' : '#d97706';
+  }
+  if(cancelBtn)  cancelBtn.style.display  = isPro ? 'block' : 'none';
+  if(upgradeBtn) upgradeBtn.style.display = isPro ? 'none'  : 'block';
+
+  // Settings tab status
+  const statusEl2 = document.getElementById('ap-plan-status2');
+  if(statusEl2) statusEl2.textContent = isPro ? '施術者プラン ● 利用中' : '未契約';
+}
+
+function apUpgradePlan(){
+  if(confirm('AxisPro 施術者プランに申し込みますか？\n\n¥3,800/月（税込）\n最初の14日間は無料です。\n解約はいつでも可能です。\n\n決済ページ（Stripe）へ移動します。')){
+    window.open('https://buy.stripe.com/9B628r6gT3pXcNj6n87AI04','_blank');
+    setTimeout(()=>{
+      if(confirm('決済は完了しましたか？\n「OK」でプランを有効にします。')){
+        apSavePlan('pro');
+        apUpdatePlanUI();
+      }
+    }, 2000);
+  }
+}
+
+function apCancelPlan(){
+  if(confirm('施術者プランを解約して無料プランに戻しますか？\n\n当月末まではご利用いただけます。')){
+    apSavePlan('free');
+    apUpdatePlanUI();
+  }
+}
+
+/* Wrap switchTab to refresh plan UI */
+(function(){
+  const _orig = switchTab;
+  window.switchTab = function(name){
+    _orig(name);
+    if(name==='plan'||name==='settings') apUpdatePlanUI();
+  };
+})();
+</script>
+</body>
+</html>
